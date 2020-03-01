@@ -1,4 +1,4 @@
-package jessica
+package jessicaplugin
 
 import (
 	"io/ioutil"
@@ -22,7 +22,7 @@ func init() {
 		Name:    "Jessica",
 		Type:    PLUGIN_SUBSCRIBER,
 		Config:  config,
-		UI:      path.Join(path.Dir(currentFilePath), "./dashboard/ui/plugin-jessica.min.js"),
+		UI:      path.Join(path.Dir(currentFilePath), "dashboard", "ui", "plugin-jessica.min.js"),
 		Version: "1.0.0",
 		Run:     run,
 	})

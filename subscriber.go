@@ -1,4 +1,4 @@
-package jessica
+package jessicaplugin
 
 import (
 	"encoding/binary"
