@@ -74,6 +74,9 @@ export default {
         Jessibuca,
         Subscribers
     },
+    props: {
+        listenaddr: String
+    },
     data() {
         return {
             showPreview: false,
@@ -91,6 +94,7 @@ export default {
             Rooms: []
         };
     },
+
     methods: {
         getSubscriberCount(item) {
             if (
@@ -105,7 +109,12 @@ export default {
             this.currentStream = item;
             this.$nextTick(() =>
                 this.$refs.jessibuca.play(
-                    "ws://" + location.hostname + ":8080/" + item.StreamPath
+                    "ws://" +
+                        location.hostname +
+                        ":" +
+                        this.listenaddr.split(":").pop() +
+                        "/" +
+                        item.StreamPath
                 )
             );
             this.showPreview = true;
@@ -124,7 +133,7 @@ export default {
             this.currentStream = item;
         },
         fetchSummary() {
-            summaryES = new EventSource("//" + location.host + "/api/summary");
+            summaryES = new EventSource("/api/summary");
             summaryES.onmessage = evt => {
                 if (!evt.data) return;
                 let summary = JSON.parse(evt.data);

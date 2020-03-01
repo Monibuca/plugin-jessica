@@ -722,12 +722,12 @@ function normalizeComponent (
   }
 }
 
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"d35c04d4-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./index.vue?vue&type=template&id=6e667a60&shadow
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"d35c04d4-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./index.vue?vue&type=template&id=e6bcc010&shadow
 var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"layout"},[_vm._l((_vm.Rooms),function(item){return _c('Card',{key:item.StreamPath,staticClass:"room"},[_c('p',{attrs:{"slot":"title"},slot:"title"},[_vm._v(_vm._s(_vm.typeMap[item.Type]||item.Type)+_vm._s(item.StreamPath))]),_c('StartTime',{attrs:{"slot":"extra","value":item.StartTime},slot:"extra"}),_c('p',[_vm._v(" "+_vm._s(_vm.SoundFormat(item.AudioInfo.SoundFormat))+" "+_vm._s(item.AudioInfo.PacketCount)+" "+_vm._s(_vm.SoundRate(item.AudioInfo.SoundRate))+" 声道:"+_vm._s(item.AudioInfo.SoundType)+" ")]),_c('p',[_vm._v(" "+_vm._s(_vm.CodecID(item.VideoInfo.CodecID))+" "+_vm._s(item.VideoInfo.PacketCount)+" "+_vm._s(item.VideoInfo.SPSInfo.Width)+"x"+_vm._s(item.VideoInfo.SPSInfo.Height)+" ")]),_c('ButtonGroup',{attrs:{"size":"small"}},[_c('Button',{attrs:{"icon":"ios-people"},on:{"click":function($event){return _vm.onShowDetail(item)}}},[_vm._v(_vm._s(_vm.getSubscriberCount(item)))]),(item.Type)?_c('Button',{attrs:{"icon":"md-eye"},on:{"click":function($event){return _vm.preview(item)}}}):_vm._e()],1)],1)}),(_vm.Rooms.length==0)?_c('div',{staticClass:"empty"},[_c('Icon',{attrs:{"type":"md-wine","size":"50"}}),_vm._v("没有任何房间 ")],1):_vm._e(),_c('Jessibuca',{ref:"jessibuca",attrs:{"videoCodec":_vm.currentStream && _vm.CodecID(_vm.currentStream.VideoInfo.CodecID),"audioCodec":_vm.currentStream && _vm.SoundFormat(_vm.currentStream.AudioInfo.SoundFormat)},model:{value:(_vm.showPreview),callback:function ($$v) {_vm.showPreview=$$v},expression:"showPreview"}}),_c('Subscribers',{attrs:{"data":_vm.currentStream && _vm.currentStream.SubscriberInfo || []},model:{value:(_vm.showSubscribers),callback:function ($$v) {_vm.showSubscribers=$$v},expression:"showSubscribers"}})],2)}
 var staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./index.vue?vue&type=template&id=6e667a60&shadow
+// CONCATENATED MODULE: ./index.vue?vue&type=template&id=e6bcc010&shadow
 
 // CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"d35c04d4-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./components/Jessibuca.vue?vue&type=template&id=1aa99706&
 var Jessibucavue_type_template_id_1aa99706_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('Modal',_vm._g(_vm._b({attrs:{"draggable":"","title":_vm.url},on:{"on-ok":_vm.onClosePreview,"on-cancel":_vm.onClosePreview}},'Modal',_vm.$attrs,false),_vm.$listeners),[_c('canvas',{staticStyle:{"background":"black"},attrs:{"id":"canvas","width":"488","height":"275"}}),_c('div',{attrs:{"slot":"footer"},slot:"footer"},[(_vm.audioEnabled)?_c('Button',{attrs:{"icon":"md-volume-up"},on:{"click":_vm.turnOff}}):_c('Button',{attrs:{"icon":"md-volume-off"},on:{"click":_vm.turnOn}})],1)])}
@@ -1068,6 +1068,9 @@ let summaryES = null;
         Jessibuca: Jessibuca,
         Subscribers: Subscribers
     },
+    props: {
+        listenaddr: String
+    },
     data() {
         return {
             showPreview: false,
@@ -1085,6 +1088,7 @@ let summaryES = null;
             Rooms: []
         };
     },
+
     methods: {
         getSubscriberCount(item) {
             if (
@@ -1099,7 +1103,12 @@ let summaryES = null;
             this.currentStream = item;
             this.$nextTick(() =>
                 this.$refs.jessibuca.play(
-                    "ws://" + location.hostname + ":8080/" + item.StreamPath
+                    "ws://" +
+                        location.hostname +
+                        ":" +
+                        this.listenaddr.split(":").pop() +
+                        "/" +
+                        item.StreamPath
                 )
             );
             this.showPreview = true;
@@ -1118,7 +1127,7 @@ let summaryES = null;
             this.currentStream = item;
         },
         fetchSummary() {
-            summaryES = new EventSource("//" + location.host + "/api/summary");
+            summaryES = new EventSource("/api/summary");
             summaryES.onmessage = evt => {
                 if (!evt.data) return;
                 let summary = JSON.parse(evt.data);
