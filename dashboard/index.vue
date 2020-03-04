@@ -163,4 +163,12 @@ export default {
     display: flex;
     flex-wrap: wrap;
 }
+.empty {
+    color: #eb5e46;
+    width: 100%;
+    min-height: 500px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 </style>

@@ -6,23 +6,22 @@ import (
 	"mime"
 	"net/http"
 	"path"
-	"runtime"
 	"strings"
 
 	. "github.com/Monibuca/engine"
+	. "github.com/Monibuca/engine/util"
 )
 
 var config = new(ListenerConfig)
 var publicPath string
 
 func init() {
-	_, currentFilePath, _, _ := runtime.Caller(0)
-	publicPath = path.Join(path.Dir(currentFilePath), "dashboard", "public")
+	publicPath = CurrentDir("dashboard", "public")
 	InstallPlugin(&PluginConfig{
 		Name:    "Jessica",
 		Type:    PLUGIN_SUBSCRIBER,
 		Config:  config,
-		UI:      path.Join(path.Dir(currentFilePath), "dashboard", "ui", "plugin-jessica.min.js"),
+		UI:      CurrentDir("dashboard", "ui", "plugin-jessica.min.js"),
 		Version: "1.0.0",
 		Run:     run,
 	})
