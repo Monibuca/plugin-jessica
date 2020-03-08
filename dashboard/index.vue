@@ -1,30 +1,37 @@
 <template>
-    <div class="layout">
-        <Card v-for="item in Rooms" :key="item.StreamPath" class="room">
-            <p slot="title">{{typeMap[item.Type]||item.Type}}{{item.StreamPath}}</p>
-            <StartTime slot="extra" :value="item.StartTime"></StartTime>
-            <p>
-                {{SoundFormat(item.AudioInfo.SoundFormat)}} {{item.AudioInfo.PacketCount}}
-                {{SoundRate(item.AudioInfo.SoundRate)}} 声道:{{item.AudioInfo.SoundType}}
-            </p>
-            <p>
-                {{CodecID(item.VideoInfo.CodecID)}} {{item.VideoInfo.PacketCount}}
-                {{item.VideoInfo.SPSInfo.Width}}x{{item.VideoInfo.SPSInfo.Height}}
-            </p>
-            <ButtonGroup size="small">
-                <Button @click="onShowDetail(item)" icon="ios-people">{{getSubscriberCount(item)}}</Button>
-                <Button v-if="item.Type" @click="preview(item)" icon="md-eye"></Button>
-                <!-- <Button
-                    @click="stopRecord(item)"
-                    class="recording"
-                    v-if="isRecording(item)"
-                    icon="ios-radio-button-on"
-                ></Button>
-                <Button @click="record(item)" v-else icon="ios-radio-button-on"></Button>-->
-            </ButtonGroup>
-        </Card>
-        <div v-if="Rooms.length==0" class="empty">
+    <div>
+        <!-- <i-input search enter-button="播放" placeholder="" @on-search="onPlay">
+            <span slot="prepend">ws://{{host}}/</span>
+        </i-input> -->
+        <Spin fix  v-if="Rooms==null">
+                <Icon type="ios-loading" size=18 class="demo-spin-icon-load"></Icon>
+                <div>Loading</div>
+            </Spin>
+        <div v-else-if="Rooms.length==0" class="empty">
             <Icon type="md-wine" size="50" />没有任何房间
+        </div>
+        <div class="layout" v-else>
+            <Card :title="item.StreamPath" v-for="item in Rooms" :key="item.StreamPath" class="room">
+                <Tag color="purple" slot="extra">{{item.Type||"await"}}</Tag>
+                <p v-if="item.Type">
+                    {{SoundFormat(item.AudioInfo.SoundFormat)}} {{item.AudioInfo.PacketCount}}
+                    {{SoundRate(item.AudioInfo.SoundRate)}} 声道:{{item.AudioInfo.SoundType}}
+                </p>
+                <p v-if="item.Type">
+                    {{CodecID(item.VideoInfo.CodecID)}} {{item.VideoInfo.PacketCount}}
+                    {{item.VideoInfo.SPSInfo.Width}}x{{item.VideoInfo.SPSInfo.Height}}
+                </p>
+                <p>
+                    创建时间：<StartTime :value="item.StartTime"></StartTime>
+                </p>
+                <ButtonGroup size="small">
+                    <Button
+                        @click="onShowDetail(item)"
+                        icon="ios-people"
+                    >{{getSubscriberCount(item)}}</Button>
+                    <Button v-if="item.Type" @click="preview(item)" icon="md-eye"></Button>
+                </ButtonGroup>
+            </Card>
         </div>
         <Jessibuca
             ref="jessibuca"
@@ -68,11 +75,13 @@ const CodecID = {
 };
 import Jessibuca from "./components/Jessibuca";
 import Subscribers from "./components/Subscribers";
+import StartTime from "./components/StartTime"
 let summaryES = null;
 export default {
     components: {
         Jessibuca,
-        Subscribers
+        Subscribers,
+        StartTime,
     },
     props: {
         listenaddr: String
@@ -91,10 +100,14 @@ export default {
                 Match365: "🏆",
                 RTMP: "🚠"
             },
-            Rooms: []
+            Rooms: null
         };
     },
-
+    computed: {
+        host() {
+            return location.hostname + ":" + this.listenaddr.split(":").pop();
+        }
+    },
     methods: {
         getSubscriberCount(item) {
             if (
@@ -107,17 +120,13 @@ export default {
         },
         preview(item) {
             this.currentStream = item;
-            this.$nextTick(() =>
-                this.$refs.jessibuca.play(
-                    "ws://" +
-                        location.hostname +
-                        ":" +
-                        this.listenaddr.split(":").pop() +
-                        "/" +
-                        item.StreamPath
-                )
-            );
+            this.onPlay("ws://" + this.host + "/" + item.StreamPath);
+        },
+        onPlay(url) {
             this.showPreview = true;
+            this.$nextTick(() =>
+                this.$refs.jessibuca.play(url)
+            );
         },
         SoundFormat(soundFormat) {
             return SoundFormat[soundFormat];
@@ -163,6 +172,9 @@ export default {
     display: flex;
     flex-wrap: wrap;
 }
+.layout>*{
+    margin: 10px;
+}
 .empty {
     color: #eb5e46;
     width: 100%;
@@ -171,4 +183,7 @@ export default {
     justify-content: center;
     align-items: center;
 }
+.demo-spin-icon-load{
+        animation: ani-demo-spin 1s linear infinite;
+    }
 </style>

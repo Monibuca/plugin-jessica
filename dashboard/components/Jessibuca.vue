@@ -31,7 +31,9 @@ export default {
                 AAC_AVC: "ff",
                 AAC_H265: "hevc_aac",
                 MP3_AVC: "ff_mp3",
-                MP3_H265: "hevc_mp3"
+                MP3_H265: "hevc_mp3",
+                AVC: "ff",
+                H265: "hevc_aac"
             }
         };
     },
@@ -51,11 +53,11 @@ export default {
     },
     computed: {
         decoder() {
-            return (
-                "jessibuca/" +
-                this.decoderTable[this.audioCodec + "_" + this.videoCodec] +
-                ".js"
-            );
+            let js = this.decoderTable[this.audioCodec + "_" + this.videoCodec];
+            if (!js) {
+                js = this.decoderTable[this.videoCodec] || "ff";
+            }
+            return "jessibuca/" + js + ".js";
         }
     },
     mounted() {

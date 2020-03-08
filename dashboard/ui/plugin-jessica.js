@@ -94,7 +94,7 @@ var ___CSS_LOADER_API_IMPORT___ = __webpack_require__("24fb");
 exports = ___CSS_LOADER_API_IMPORT___(false);
 exports.push([module.i, "@import url(/iview.css);"]);
 // Module
-exports.push([module.i, ".layout{padding-bottom:30px;display:flex;flex-wrap:wrap}.empty{color:#eb5e46;width:100%;min-height:500px;display:flex;justify-content:center;align-items:center}", ""]);
+exports.push([module.i, ".layout{padding-bottom:30px;display:flex;flex-wrap:wrap}.layout>*{margin:10px}.empty{color:#eb5e46;width:100%;min-height:500px;display:flex;justify-content:center;align-items:center}.demo-spin-icon-load{-webkit-animation:ani-demo-spin 1s linear infinite;animation:ani-demo-spin 1s linear infinite}", ""]);
 // Exports
 module.exports = exports;
 
@@ -722,19 +722,19 @@ function normalizeComponent (
   }
 }
 
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"d35c04d4-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./index.vue?vue&type=template&id=6940b3a2&shadow
-var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"layout"},[_vm._l((_vm.Rooms),function(item){return _c('Card',{key:item.StreamPath,staticClass:"room"},[_c('p',{attrs:{"slot":"title"},slot:"title"},[_vm._v(_vm._s(_vm.typeMap[item.Type]||item.Type)+_vm._s(item.StreamPath))]),_c('StartTime',{attrs:{"slot":"extra","value":item.StartTime},slot:"extra"}),_c('p',[_vm._v(" "+_vm._s(_vm.SoundFormat(item.AudioInfo.SoundFormat))+" "+_vm._s(item.AudioInfo.PacketCount)+" "+_vm._s(_vm.SoundRate(item.AudioInfo.SoundRate))+" 声道:"+_vm._s(item.AudioInfo.SoundType)+" ")]),_c('p',[_vm._v(" "+_vm._s(_vm.CodecID(item.VideoInfo.CodecID))+" "+_vm._s(item.VideoInfo.PacketCount)+" "+_vm._s(item.VideoInfo.SPSInfo.Width)+"x"+_vm._s(item.VideoInfo.SPSInfo.Height)+" ")]),_c('ButtonGroup',{attrs:{"size":"small"}},[_c('Button',{attrs:{"icon":"ios-people"},on:{"click":function($event){return _vm.onShowDetail(item)}}},[_vm._v(_vm._s(_vm.getSubscriberCount(item)))]),(item.Type)?_c('Button',{attrs:{"icon":"md-eye"},on:{"click":function($event){return _vm.preview(item)}}}):_vm._e()],1)],1)}),(_vm.Rooms.length==0)?_c('div',{staticClass:"empty"},[_c('Icon',{attrs:{"type":"md-wine","size":"50"}}),_vm._v("没有任何房间 ")],1):_vm._e(),_c('Jessibuca',{ref:"jessibuca",attrs:{"videoCodec":_vm.currentStream && _vm.CodecID(_vm.currentStream.VideoInfo.CodecID),"audioCodec":_vm.currentStream && _vm.SoundFormat(_vm.currentStream.AudioInfo.SoundFormat)},model:{value:(_vm.showPreview),callback:function ($$v) {_vm.showPreview=$$v},expression:"showPreview"}}),_c('Subscribers',{attrs:{"data":_vm.currentStream && _vm.currentStream.SubscriberInfo || []},model:{value:(_vm.showSubscribers),callback:function ($$v) {_vm.showSubscribers=$$v},expression:"showSubscribers"}})],2)}
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"d35c04d4-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./index.vue?vue&type=template&id=e0f618ca&shadow
+var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[(_vm.Rooms==null)?_c('Spin',{attrs:{"fix":""}},[_c('Icon',{staticClass:"demo-spin-icon-load",attrs:{"type":"ios-loading","size":"18"}}),_c('div',[_vm._v("Loading")])],1):(_vm.Rooms.length==0)?_c('div',{staticClass:"empty"},[_c('Icon',{attrs:{"type":"md-wine","size":"50"}}),_vm._v("没有任何房间 ")],1):_c('div',{staticClass:"layout"},_vm._l((_vm.Rooms),function(item){return _c('Card',{key:item.StreamPath,staticClass:"room",attrs:{"title":item.StreamPath}},[_c('Tag',{attrs:{"slot":"extra","color":"purple"},slot:"extra"},[_vm._v(_vm._s(item.Type||"await"))]),(item.Type)?_c('p',[_vm._v(" "+_vm._s(_vm.SoundFormat(item.AudioInfo.SoundFormat))+" "+_vm._s(item.AudioInfo.PacketCount)+" "+_vm._s(_vm.SoundRate(item.AudioInfo.SoundRate))+" 声道:"+_vm._s(item.AudioInfo.SoundType)+" ")]):_vm._e(),(item.Type)?_c('p',[_vm._v(" "+_vm._s(_vm.CodecID(item.VideoInfo.CodecID))+" "+_vm._s(item.VideoInfo.PacketCount)+" "+_vm._s(item.VideoInfo.SPSInfo.Width)+"x"+_vm._s(item.VideoInfo.SPSInfo.Height)+" ")]):_vm._e(),_c('p',[_vm._v(" 创建时间："),_c('StartTime',{attrs:{"value":item.StartTime}})],1),_c('ButtonGroup',{attrs:{"size":"small"}},[_c('Button',{attrs:{"icon":"ios-people"},on:{"click":function($event){return _vm.onShowDetail(item)}}},[_vm._v(_vm._s(_vm.getSubscriberCount(item)))]),(item.Type)?_c('Button',{attrs:{"icon":"md-eye"},on:{"click":function($event){return _vm.preview(item)}}}):_vm._e()],1)],1)}),1),_c('Jessibuca',{ref:"jessibuca",attrs:{"videoCodec":_vm.currentStream && _vm.CodecID(_vm.currentStream.VideoInfo.CodecID),"audioCodec":_vm.currentStream && _vm.SoundFormat(_vm.currentStream.AudioInfo.SoundFormat)},model:{value:(_vm.showPreview),callback:function ($$v) {_vm.showPreview=$$v},expression:"showPreview"}}),_c('Subscribers',{attrs:{"data":_vm.currentStream && _vm.currentStream.SubscriberInfo || []},model:{value:(_vm.showSubscribers),callback:function ($$v) {_vm.showSubscribers=$$v},expression:"showSubscribers"}})],1)}
 var staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./index.vue?vue&type=template&id=6940b3a2&shadow
+// CONCATENATED MODULE: ./index.vue?vue&type=template&id=e0f618ca&shadow
 
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"d35c04d4-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./components/Jessibuca.vue?vue&type=template&id=1aa99706&
-var Jessibucavue_type_template_id_1aa99706_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('Modal',_vm._g(_vm._b({attrs:{"draggable":"","title":_vm.url},on:{"on-ok":_vm.onClosePreview,"on-cancel":_vm.onClosePreview}},'Modal',_vm.$attrs,false),_vm.$listeners),[_c('canvas',{staticStyle:{"background":"black"},attrs:{"id":"canvas","width":"488","height":"275"}}),_c('div',{attrs:{"slot":"footer"},slot:"footer"},[(_vm.audioEnabled)?_c('Button',{attrs:{"icon":"md-volume-up"},on:{"click":_vm.turnOff}}):_c('Button',{attrs:{"icon":"md-volume-off"},on:{"click":_vm.turnOn}})],1)])}
-var Jessibucavue_type_template_id_1aa99706_staticRenderFns = []
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"d35c04d4-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./components/Jessibuca.vue?vue&type=template&id=676dbd38&
+var Jessibucavue_type_template_id_676dbd38_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('Modal',_vm._g(_vm._b({attrs:{"draggable":"","title":_vm.url},on:{"on-ok":_vm.onClosePreview,"on-cancel":_vm.onClosePreview}},'Modal',_vm.$attrs,false),_vm.$listeners),[_c('canvas',{staticStyle:{"background":"black"},attrs:{"id":"canvas","width":"488","height":"275"}}),_c('div',{attrs:{"slot":"footer"},slot:"footer"},[(_vm.audioEnabled)?_c('Button',{attrs:{"icon":"md-volume-up"},on:{"click":_vm.turnOff}}):_c('Button',{attrs:{"icon":"md-volume-off"},on:{"click":_vm.turnOn}})],1)])}
+var Jessibucavue_type_template_id_676dbd38_staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./components/Jessibuca.vue?vue&type=template&id=1aa99706&
+// CONCATENATED MODULE: ./components/Jessibuca.vue?vue&type=template&id=676dbd38&
 
 // CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./components/Jessibuca.vue?vue&type=script&lang=js&
 //
@@ -770,7 +770,9 @@ let h5lc = null;
                 AAC_AVC: "ff",
                 AAC_H265: "hevc_aac",
                 MP3_AVC: "ff_mp3",
-                MP3_H265: "hevc_mp3"
+                MP3_H265: "hevc_mp3",
+                AVC: "ff",
+                H265: "hevc_aac"
             }
         };
     },
@@ -790,11 +792,11 @@ let h5lc = null;
     },
     computed: {
         decoder() {
-            return (
-                "jessibuca/" +
-                this.decoderTable[this.audioCodec + "_" + this.videoCodec] +
-                ".js"
-            );
+            let js = this.decoderTable[this.audioCodec + "_" + this.videoCodec];
+            if (!js) {
+                js = this.decoderTable[this.videoCodec] || "ff";
+            }
+            return "jessibuca/" + js + ".js";
         }
     },
     mounted() {
@@ -841,8 +843,8 @@ let h5lc = null;
 
 var component = normalizeComponent(
   components_Jessibucavue_type_script_lang_js_,
-  Jessibucavue_type_template_id_1aa99706_render,
-  Jessibucavue_type_template_id_1aa99706_staticRenderFns,
+  Jessibucavue_type_template_id_676dbd38_render,
+  Jessibucavue_type_template_id_676dbd38_staticRenderFns,
   false,
   null,
   null,
@@ -1033,6 +1035,13 @@ var Subscribers_component = normalizeComponent(
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 
 const SoundFormat = {
     0: "Linear PCM, platform endian",
@@ -1062,11 +1071,13 @@ const CodecID = {
 };
 
 
+
 let summaryES = null;
 /* harmony default export */ var lib_vue_loader_options_indexvue_type_script_lang_js_shadow = ({
     components: {
         Jessibuca: Jessibuca,
-        Subscribers: Subscribers
+        Subscribers: Subscribers,
+        StartTime: StartTime,
     },
     props: {
         listenaddr: String
@@ -1085,10 +1096,14 @@ let summaryES = null;
                 Match365: "🏆",
                 RTMP: "🚠"
             },
-            Rooms: []
+            Rooms: null
         };
     },
-
+    computed: {
+        host() {
+            return location.hostname + ":" + this.listenaddr.split(":").pop();
+        }
+    },
     methods: {
         getSubscriberCount(item) {
             if (
@@ -1101,17 +1116,13 @@ let summaryES = null;
         },
         preview(item) {
             this.currentStream = item;
-            this.$nextTick(() =>
-                this.$refs.jessibuca.play(
-                    "ws://" +
-                        location.hostname +
-                        ":" +
-                        this.listenaddr.split(":").pop() +
-                        "/" +
-                        item.StreamPath
-                )
-            );
+            this.onPlay("ws://" + this.host + "/" + item.StreamPath);
+        },
+        onPlay(url) {
             this.showPreview = true;
+            this.$nextTick(() =>
+                this.$refs.jessibuca.play(url)
+            );
         },
         SoundFormat(soundFormat) {
             return SoundFormat[soundFormat];
