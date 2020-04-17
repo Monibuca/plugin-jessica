@@ -1,4 +1,4 @@
-package jessicaplugin
+package jessica
 
 import (
 	"io/ioutil"
@@ -16,14 +16,11 @@ var config = new(ListenerConfig)
 var publicPath string
 
 func init() {
-	publicPath = CurrentDir("dashboard", "public")
 	InstallPlugin(&PluginConfig{
-		Name:    "Jessica",
-		Type:    PLUGIN_SUBSCRIBER,
-		Config:  config,
-		UI:      CurrentDir("dashboard", "ui", "plugin-jessica.min.js"),
-		Version: "1.0.0",
-		Run:     run,
+		Name:   "Jessica",
+		Type:   PLUGIN_SUBSCRIBER,
+		Config: config,
+		Run:    run,
 	})
 }
 func run() {

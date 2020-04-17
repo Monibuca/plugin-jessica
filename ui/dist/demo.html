@@ -1,0 +1,19 @@
+<meta charset="utf-8">
+<title>plugin-jessica demo</title>
+<script src="https://unpkg.com/vue"></script>
+<script src="./plugin-jessica.umd.js"></script>
+
+<link rel="stylesheet" href="./plugin-jessica.css">
+
+
+<div id="app">
+  <demo></demo>
+</div>
+
+<script>
+new Vue({
+  components: {
+    demo: plugin-jessica
+  }
+}).$mount('#app')
+</script>

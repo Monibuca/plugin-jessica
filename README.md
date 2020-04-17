@@ -12,6 +12,6 @@ Jessica
 目前仅有的配置是监听的端口号
 
 ```toml
-[Plugins.Jessica]
+[Jessica]
 ListenAddr = ":8080"
 ```

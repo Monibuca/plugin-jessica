@@ -1,0 +1,1 @@
+@import url(/iview.css);.layout{padding-bottom:30px;display:flex;flex-wrap:wrap}.layout>*{margin:10px}.empty{color:#eb5e46;width:100%;min-height:500px;display:flex;justify-content:center;align-items:center}.demo-spin-icon-load{-webkit-animation:ani-demo-spin 1s linear infinite;animation:ani-demo-spin 1s linear infinite}

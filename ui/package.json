@@ -4,7 +4,7 @@
   "description": "dashboard of jessica plugin for monibuca",
   "main": "index.js",
   "scripts": {
-    "build": "vue-cli-service build --dest ui --target wc --name plugin-jessica index.vue"
+    "build": "vue-cli-service build --target lib --name plugin-jessica"
   },
   "author": "dexter",
   "license": "ISC",
