@@ -6,25 +6,28 @@ import (
 	"mime"
 	"net/http"
 	"path"
+	"path/filepath"
 	"strings"
 
 	. "github.com/Monibuca/engine"
-	. "github.com/Monibuca/engine/util"
+	. "github.com/logrusorgru/aurora"
 )
 
 var config = new(ListenerConfig)
 var publicPath string
 
 func init() {
-	InstallPlugin(&PluginConfig{
+	plugin := &PluginConfig{
 		Name:   "Jessica",
 		Type:   PLUGIN_SUBSCRIBER,
 		Config: config,
 		Run:    run,
-	})
+	}
+	InstallPlugin(plugin)
+	publicPath = filepath.Join(plugin.Dir, "ui", "public")
 }
 func run() {
-	log.Printf("server Jessica start at %s", config.ListenAddr)
+	Print(Green("server Jessica start at"), BrightBlue(config.ListenAddr))
 	http.HandleFunc("/jessibuca/", jessibuca)
 	log.Fatal(http.ListenAndServe(config.ListenAddr, http.HandlerFunc(WsHandler)))
 }
@@ -33,7 +36,7 @@ func jessibuca(w http.ResponseWriter, r *http.Request) {
 	if mime := mime.TypeByExtension(path.Ext(filePath)); mime != "" {
 		w.Header().Set("Content-Type", mime)
 	}
-	if f, err := ioutil.ReadFile(publicPath + filePath); err == nil {
+	if f, err := ioutil.ReadFile(filepath.Join(publicPath, filePath)); err == nil {
 		if _, err = w.Write(f); err != nil {
 			w.WriteHeader(500)
 		}

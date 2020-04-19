@@ -1,38 +1,24 @@
 <template>
-    <div>
+    <div v-loading="Rooms==null">
         <!-- <i-input search enter-button="播放" placeholder="" @on-search="onPlay">
             <span slot="prepend">ws://{{host}}/</span>
-        </i-input> -->
-        <Spin fix  v-if="Rooms==null">
-                <Icon type="ios-loading" size=18 class="demo-spin-icon-load"></Icon>
-                <div>Loading</div>
-            </Spin>
-        <div v-else-if="Rooms.length==0" class="empty">
-            <Icon type="md-wine" size="50" />没有任何房间
-        </div>
-        <div class="layout" v-else>
-            <Card :title="item.StreamPath" v-for="item in Rooms" :key="item.StreamPath" class="room">
-                <Tag color="purple" slot="extra">{{item.Type||"await"}}</Tag>
-                <p v-if="item.Type">
-                    {{SoundFormat(item.AudioInfo.SoundFormat)}} {{item.AudioInfo.PacketCount}}
-                    {{SoundRate(item.AudioInfo.SoundRate)}} 声道:{{item.AudioInfo.SoundType}}
-                </p>
-                <p v-if="item.Type">
-                    {{CodecID(item.VideoInfo.CodecID)}} {{item.VideoInfo.PacketCount}}
-                    {{item.VideoInfo.SPSInfo.Width}}x{{item.VideoInfo.SPSInfo.Height}}
-                </p>
-                <p>
-                    创建时间：<StartTime :value="item.StartTime"></StartTime>
-                </p>
-                <ButtonGroup size="small">
-                    <Button
-                        @click="onShowDetail(item)"
-                        icon="ios-people"
-                    >{{getSubscriberCount(item)}}</Button>
-                    <Button v-if="item.Type" @click="preview(item)" icon="md-eye"></Button>
-                </ButtonGroup>
-            </Card>
-        </div>
+        </i-input>-->
+        <mu-data-table :columns="columns" :data="Rooms" :min-col-width="50" @row-dblclick="preview" @row-click="$toast.message('双击预览')">
+            <template slot-scope="scope">
+                <td class="is-center">{{scope.row.StreamPath}}</td>
+                <td class="is-center">{{scope.row.Type||"await"}}</td>
+                <td class="is-center">
+                    <StartTime :value="scope.row.StartTime"></StartTime>
+                </td>
+                <td class="is-center">{{SoundFormat(scope.row.AudioInfo.SoundFormat)}}</td>
+                <td class="is-center">{{SoundRate(scope.row.AudioInfo.SoundRate)}}</td>
+                <td class="is-center">{{scope.row.AudioInfo.SoundType}}</td>
+                <td class="is-center">{{CodecID(scope.row.VideoInfo.CodecID)}}</td>
+                <td class="is-center">{{scope.row.VideoInfo.SPSInfo.Width}}x{{scope.row.VideoInfo.SPSInfo.Height}}</td>
+                <td class="is-center">{{scope.row.AudioInfo.PacketCount}}/{{scope.row.VideoInfo.PacketCount}}</td>
+                <td class="is-center">{{getSubscriberCount(scope.row)}}</td>
+            </template>
+        </mu-data-table>
         <Jessibuca
             ref="jessibuca"
             v-model="showPreview"
@@ -75,37 +61,102 @@ const CodecID = {
 };
 import Jessibuca from "./components/Jessibuca";
 import Subscribers from "./components/Subscribers";
-import StartTime from "./components/StartTime"
+import StartTime from "./components/StartTime";
 let summaryES = null;
 export default {
     components: {
         Jessibuca,
         Subscribers,
-        StartTime,
+        StartTime
     },
-    props: {
-        listenaddr: String
+    props:{
+        ListenAddr:String
     },
     data() {
         return {
             showPreview: false,
             currentStream: null,
             showSubscribers: false,
-            typeMap: {
-                Receiver: "📡",
-                FlvFile: "🎥",
-                TS: "🎬",
-                HLS: "🍎",
-                "": "⏳",
-                Match365: "🏆",
-                RTMP: "🚠"
-            },
-            Rooms: null
+            // typeMap: {
+            //     Receiver: "📡",
+            //     FlvFile: "🎥",
+            //     TS: "🎬",
+            //     HLS: "🍎",
+            //     "": "⏳",
+            //     Match365: "🏆",
+            //     RTMP: "🚠"
+            // },
+            Rooms: null,
+            columns: [
+                {
+                    title: "房间",
+                    name: "StreamPath",
+                    sortable: true,
+                    align: "center",
+                    cellAlign: "center"
+                },
+                {
+                    title: "类型",
+                    name: "Type",
+                    sortable: true,
+                    align: "center",
+                    cellAlign: "center"
+                },
+                {
+                    title: "开始时间",
+                    name: "StartTime",
+                    sortable: true,
+                    align: "center",
+                    cellAlign: "center"
+                },
+                {
+                    title: "音频格式",
+                    name: "AudioInfo",
+                    align: "center",
+                    cellAlign: "center"
+                },
+                {
+                    title: "采样率",
+                    name: "AudioInfo",
+                    align: "center",
+                    cellAlign: "center"
+                },
+                {
+                    title: "声道",
+                    name: "AudioInfo",
+                    align: "center",
+                    cellAlign: "center"
+                },
+                {
+                    title: "视频格式",
+                    name: "VideoInfo",
+                    align: "center",
+                    cellAlign: "center"
+                },
+                {
+                    title: "分辨率",
+                    name: "VideoInfo",
+                    align: "center",
+                    cellAlign: "center"
+                },
+                {
+                    title: "数据包",
+                    name: "",
+                    align: "center",
+                    cellAlign: "center"
+                },
+                {
+                    title: "订阅者",
+                    name: "Subscribes",
+                    align: "center",
+                    cellAlign: "center"
+                }
+            ]
         };
     },
     computed: {
         host() {
-            return location.hostname + ":" + this.listenaddr.split(":").pop();
+            return location.hostname + ":" + this.ListenAddr.split(":").pop();
         }
     },
     methods: {
@@ -118,15 +169,13 @@ export default {
             }
             return item.SubscriberInfo ? item.SubscriberInfo.length : 0;
         },
-        preview(item) {
-            this.currentStream = item;
-            this.onPlay("ws://" + this.host + "/" + item.StreamPath);
+        preview(index, row, event) {
+            this.currentStream = row;
+            this.onPlay("ws://" + this.host + "/" + row.StreamPath);
         },
         onPlay(url) {
             this.showPreview = true;
-            this.$nextTick(() =>
-                this.$refs.jessibuca.play(url)
-            );
+            this.$nextTick(() => this.$refs.jessibuca.play(url));
         },
         SoundFormat(soundFormat) {
             return SoundFormat[soundFormat];
@@ -156,25 +205,22 @@ export default {
         }
     },
     mounted() {
+        console.log(this);
         this.fetchSummary();
     },
-    deactivated() {
+    destroyed() {
         summaryES.close();
         this.$refs.jessibuca.destroy();
     }
 };
 </script>
 
-<style>
-@import url("/iview.css");
-.layout {
-    padding-bottom: 30px;
-    display: flex;
-    flex-wrap: wrap;
+<style scoped>
+td {
+    padding-left: 5px;
+    padding-right: 5px;
 }
-.layout>*{
-    margin: 10px;
-}
+
 .empty {
     color: #eb5e46;
     width: 100%;
@@ -183,7 +229,7 @@ export default {
     justify-content: center;
     align-items: center;
 }
-.demo-spin-icon-load{
-        animation: ani-demo-spin 1s linear infinite;
-    }
+.demo-spin-icon-load {
+    animation: ani-demo-spin 1s linear infinite;
+}
 </style>

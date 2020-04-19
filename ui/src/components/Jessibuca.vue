@@ -14,7 +14,10 @@
         </div>
     </Modal>
 </template>
+<style scoped>
 
+
+</style>
 <script>
 let h5lc = null;
 export default {
