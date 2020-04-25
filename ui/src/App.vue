@@ -16,7 +16,7 @@
                 <td class="is-center">{{scope.row.AudioInfo.SoundType}}</td>
                 <td class="is-center">{{CodecID(scope.row.VideoInfo.CodecID)}}</td>
                 <td class="is-center">{{scope.row.VideoInfo.SPSInfo.Width}}x{{scope.row.VideoInfo.SPSInfo.Height}}</td>
-                <td class="is-center">{{scope.row.AudioInfo.PacketCount}}/{{scope.row.VideoInfo.PacketCount}}</td>
+                <td class="is-center">{{scope.row.AudioInfo.BPS}}/{{scope.row.VideoInfo.BPS}}</td>
                 <td class="is-center">{{getSubscriberCount(scope.row)}}</td>
             </template>
         </mu-data-table>
@@ -30,13 +30,11 @@
 <script>
 import Jessibuca from "./components/Jessibuca";
 import Subscribers from "./components/Subscribers";
-import StartTime from "./components/StartTime";
 let summaryES = null;
 export default {
     components: {
         Jessibuca,
         Subscribers,
-        StartTime
     },
     props: {
         ListenAddr: String
@@ -52,63 +50,61 @@ export default {
                     name: "StreamPath",
                     sortable: true,
                     align: "center",
-                    cellAlign: "center"
+                    
                 },
                 {
                     title: "类型",
                     name: "Type",
                     sortable: true,
                     align: "center",
-                    cellAlign: "center"
+                    
                 },
                 {
                     title: "开始时间",
                     name: "StartTime",
                     sortable: true,
                     align: "center",
-                    cellAlign: "center"
+                    
                 },
                 {
                     title: "音频格式",
                     name: "AudioInfo",
                     align: "center",
-                    cellAlign: "center"
+                    
                 },
                 {
                     title: "采样率",
                     name: "AudioInfo",
                     align: "center",
-                    cellAlign: "center"
+                    
                 },
                 {
                     title: "声道",
                     name: "AudioInfo",
                     align: "center",
-                    cellAlign: "center"
+                    
                 },
                 {
                     title: "视频格式",
                     name: "VideoInfo",
                     align: "center",
-                    cellAlign: "center"
+                    
                 },
                 {
                     title: "分辨率",
                     name: "VideoInfo",
                     align: "center",
-                    cellAlign: "center"
+                    
                 },
                 {
-                    title: "数据包",
-                    name: "",
+                    title: "码率Bps",
                     align: "center",
-                    cellAlign: "center"
+                    
                 },
                 {
                     title: "订阅者",
-                    name: "Subscribes",
                     align: "center",
-                    cellAlign: "center"
+                    
                 }
             ]
         };
