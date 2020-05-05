@@ -5,7 +5,6 @@
 </template>
 
 <script>
-import StartTime from "./StartTime"
 export default {
   props: {
     data: Array

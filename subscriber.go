@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	. "github.com/Monibuca/engine"
-	"github.com/Monibuca/engine/avformat"
-	"github.com/Monibuca/engine/pool"
+	. "github.com/Monibuca/engine/v2"
+	"github.com/Monibuca/engine/v2/avformat"
+	"github.com/Monibuca/engine/v2/pool"
 	"github.com/gobwas/ws"
 )
 
@@ -27,12 +27,12 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	baseStream := OutputStream{Sign: sign}
+	baseStream := Subscriber{Sign: sign}
 	baseStream.ID = conn.RemoteAddr().String()
 	defer conn.Close()
 	if isFlv {
 		baseStream.Type = "JessicaFlv"
-		baseStream.SendHandler = func(packet *avformat.SendPacket) error {
+		baseStream.OnData = func(packet *avformat.SendPacket) error {
 			return avformat.WriteFLVTag(conn, packet)
 		}
 		if err := ws.WriteHeader(conn, ws.Header{
@@ -47,17 +47,17 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		baseStream.Type = "Jessica"
-		baseStream.SendHandler = func(packet *avformat.SendPacket) error {
+		baseStream.OnData = func(packet *avformat.SendPacket) error {
 			err := ws.WriteHeader(conn, ws.Header{
 				Fin:    true,
 				OpCode: ws.OpBinary,
-				Length: int64(len(packet.Packet.Payload) + 5),
+				Length: int64(len(packet.Payload) + 5),
 			})
 			if err != nil {
 				return err
 			}
 			head := pool.GetSlice(5)
-			head[0] = packet.Packet.Type - 7
+			head[0] = packet.Type - 7
 			binary.BigEndian.PutUint32(head[1:5], packet.Timestamp)
 			if _, err = conn.Write(head); err != nil {
 				return err
@@ -66,11 +66,11 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 			//if p.Header[0] == 2 {
 			//	fmt.Printf("%6d %X\n", (uint32(p.Packet.Payload[5])<<24)|(uint32(p.Packet.Payload[6])<<16)|(uint32(p.Packet.Payload[7])<<8)|uint32(p.Packet.Payload[8]), p.Packet.Payload[9])
 			//}
-			if _, err = conn.Write(packet.Packet.Payload); err != nil {
+			if _, err = conn.Write(packet.Payload); err != nil {
 				return err
 			}
 			return nil
 		}
 	}
-	baseStream.Play(streamPath)
+	baseStream.Subscribe(streamPath)
 }

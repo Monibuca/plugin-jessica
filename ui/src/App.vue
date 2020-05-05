@@ -1,25 +1,10 @@
 <template>
     <div>
-        <!-- <i-input search enter-button="播放" placeholder="" @on-search="onPlay">
-            <span slot="prepend">ws://{{host}}/</span>
-        </i-input>-->
-        <mu-data-table :columns="columns" :data="$store.state.Rooms" :min-col-width="50" @row-dblclick="preview"
-            @row-click="$toast.message('双击预览')">
-            <template slot-scope="scope">
-                <td class="is-center">{{scope.row.StreamPath}}</td>
-                <td class="is-center">{{scope.row.Type||"await"}}</td>
-                <td class="is-center">
-                    <StartTime :value="scope.row.StartTime"></StartTime>
-                </td>
-                <td class="is-center">{{SoundFormat(scope.row.AudioInfo.SoundFormat)}}</td>
-                <td class="is-center">{{SoundRate(scope.row.AudioInfo.SoundRate)}}</td>
-                <td class="is-center">{{scope.row.AudioInfo.SoundType}}</td>
-                <td class="is-center">{{CodecID(scope.row.VideoInfo.CodecID)}}</td>
-                <td class="is-center">{{scope.row.VideoInfo.SPSInfo.Width}}x{{scope.row.VideoInfo.SPSInfo.Height}}</td>
-                <td class="is-center">{{scope.row.AudioInfo.BPS}}/{{scope.row.VideoInfo.BPS}}</td>
-                <td class="is-center">{{getSubscriberCount(scope.row)}}</td>
-            </template>
-        </mu-data-table>
+        <stream-table>
+            <template v-slot="scope">
+                <m-button @click="preview(scope)">预览</m-button>
+            <template>
+        </stream-table>
         <Jessibuca ref="jessibuca" v-model="showPreview"
             :videoCodec="currentStream && CodecID(currentStream.VideoInfo.CodecID)"
             :audioCodec="currentStream && SoundFormat(currentStream.AudioInfo.SoundFormat)"></Jessibuca>
@@ -44,69 +29,6 @@ export default {
             showPreview: false,
             currentStream: null,
             showSubscribers: false,
-            columns: [
-                {
-                    title: "房间",
-                    name: "StreamPath",
-                    sortable: true,
-                    align: "center",
-                    
-                },
-                {
-                    title: "类型",
-                    name: "Type",
-                    sortable: true,
-                    align: "center",
-                    
-                },
-                {
-                    title: "开始时间",
-                    name: "StartTime",
-                    sortable: true,
-                    align: "center",
-                    
-                },
-                {
-                    title: "音频格式",
-                    name: "AudioInfo",
-                    align: "center",
-                    
-                },
-                {
-                    title: "采样率",
-                    name: "AudioInfo",
-                    align: "center",
-                    
-                },
-                {
-                    title: "声道",
-                    name: "AudioInfo",
-                    align: "center",
-                    
-                },
-                {
-                    title: "视频格式",
-                    name: "VideoInfo",
-                    align: "center",
-                    
-                },
-                {
-                    title: "分辨率",
-                    name: "VideoInfo",
-                    align: "center",
-                    
-                },
-                {
-                    title: "码率Bps",
-                    align: "center",
-                    
-                },
-                {
-                    title: "订阅者",
-                    align: "center",
-                    
-                }
-            ]
         };
     },
     computed: {
@@ -115,16 +37,7 @@ export default {
         }
     },
     methods: {
-        getSubscriberCount(item) {
-            if (
-                this.currentStream &&
-                this.currentStream.StreamPath == item.StreamPath
-            ) {
-                this.currentStream = item;
-            }
-            return item.SubscriberInfo ? item.SubscriberInfo.length : 0;
-        },
-        preview(index, row, event) {
+        preview({row}) {
             this.currentStream = row;
             this.onPlay("ws://" + this.host + "/" + row.StreamPath);
         },
