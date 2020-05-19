@@ -33,6 +33,14 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 	if isFlv {
 		baseStream.Type = "JessicaFlv"
 		baseStream.OnData = func(packet *avformat.SendPacket) error {
+			err := ws.WriteHeader(conn, ws.Header{
+				Fin:    true,
+				OpCode: ws.OpBinary,
+				Length: int64(len(packet.Payload) + 15),
+			})
+			if err != nil {
+				return err
+			}
 			return avformat.WriteFLVTag(conn, packet)
 		}
 		if err := ws.WriteHeader(conn, ws.Header{
