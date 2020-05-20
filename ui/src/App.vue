@@ -8,18 +8,18 @@
         <Jessibuca ref="jessibuca" v-model="showPreview"
             :videoCodec="currentStream && CodecID(currentStream.VideoInfo.CodecID)"
             :audioCodec="currentStream && SoundFormat(currentStream.AudioInfo.SoundFormat)"></Jessibuca>
-        <Subscribers :data="currentStream && currentStream.SubscriberInfo || []" v-model="showSubscribers" />
+        <!-- <Subscribers :data="currentStream && currentStream.SubscriberInfo || []" v-model="showSubscribers" /> -->
     </div>
 </template>
 
 <script>
 import Jessibuca from "./components/Jessibuca";
-import Subscribers from "./components/Subscribers";
+// import Subscribers from "./components/Subscribers";
 let summaryES = null;
 export default {
     components: {
         Jessibuca,
-        Subscribers,
+        // Subscribers,
     },
     props: {
         ListenAddr: String

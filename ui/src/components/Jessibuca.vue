@@ -3,14 +3,16 @@
         v-bind="$attrs"
         draggable
         v-on="$listeners"
-        :title="url"
+        :title="useFlvjs?url+'.flv':url"
         @on-ok="onClosePreview"
         @on-cancel="onClosePreview"
     >
-        <canvas id="canvas" width="488" height="275" style="background: black" />
+        <video ref="flvjs" v-show="useFlvjs" style="width:488px;height:275px"></video>
+        <canvas id="canvas" width="488" height="275" style="background: black" v-show="!useFlvjs"/>
         <div slot="footer">
-            <Button v-if="audioEnabled" @click="turnOff" icon="md-volume-up" />
-            <Button v-else @click="turnOn" icon="md-volume-off"></Button>
+            <!-- <Button v-if="audioEnabled" @click="turnOff" icon="md-volume-up" />
+            <Button v-else @click="turnOn" icon="md-volume-off"></Button> -->
+            <mu-switch v-model="useFlvjs" label="采用flv.js"></mu-switch>
         </div>
     </Modal>
 </template>
@@ -20,6 +22,8 @@
 </style>
 <script>
 let h5lc = null;
+let flvPlayer = null;
+import flvjs from "flv.js"
 export default {
     name: "Jessibuca",
     props: {
@@ -29,6 +33,7 @@ export default {
     data() {
         return {
             audioEnabled: true,
+            useFlvjs:false,
             url: "",
             decoderTable: {
                 AAC_AVC: "ff",
@@ -52,6 +57,22 @@ export default {
                 canvas: document.getElementById("canvas"),
                 decoder: value
             });
+        },
+        useFlvjs(v){
+            if(v){
+                h5lc.close();
+                flvPlayer = flvjs.createPlayer({
+                    type: 'flv',
+                    isLive: true,
+                    url: this.url+'.flv'
+                });
+                flvPlayer.attachMediaElement(this.$refs.flvjs);
+                flvPlayer.load();
+                flvPlayer.play();
+            }else{
+                 h5lc.play(this.url);
+                 flvPlayer.destroy()
+            }
         }
     },
     computed: {
@@ -82,6 +103,7 @@ export default {
         },
         onClosePreview() {
             h5lc.close();
+            flvPlayer.destroy()
         },
         destroy() {
             h5lc.destroy();
