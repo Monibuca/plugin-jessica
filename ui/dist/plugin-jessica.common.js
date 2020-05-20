@@ -2278,12 +2278,12 @@ var staticRenderFns = []
 
 // CONCATENATED MODULE: ./src/App.vue?vue&type=template&id=1ca5efc3&scoped=true&
 
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"f75991a6-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/Jessibuca.vue?vue&type=template&id=cb1c9026&scoped=true&
-var Jessibucavue_type_template_id_cb1c9026_scoped_true_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('Modal',_vm._g(_vm._b({attrs:{"draggable":"","title":_vm.useFlvjs?_vm.url+'.flv':_vm.url},on:{"on-ok":_vm.onClosePreview,"on-cancel":_vm.onClosePreview}},'Modal',_vm.$attrs,false),_vm.$listeners),[_c('video',{directives:[{name:"show",rawName:"v-show",value:(_vm.useFlvjs),expression:"useFlvjs"}],ref:"flvjs",staticStyle:{"width":"488px","height":"275px"}}),_c('canvas',{directives:[{name:"show",rawName:"v-show",value:(!_vm.useFlvjs),expression:"!useFlvjs"}],staticStyle:{"background":"black"},attrs:{"id":"canvas","width":"488","height":"275"}}),_c('div',{attrs:{"slot":"footer"},slot:"footer"},[_c('mu-switch',{attrs:{"label":"采用flv.js"},model:{value:(_vm.useFlvjs),callback:function ($$v) {_vm.useFlvjs=$$v},expression:"useFlvjs"}})],1)])}
-var Jessibucavue_type_template_id_cb1c9026_scoped_true_staticRenderFns = []
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"f75991a6-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/Jessibuca.vue?vue&type=template&id=ee505806&scoped=true&
+var Jessibucavue_type_template_id_ee505806_scoped_true_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('Modal',_vm._g(_vm._b({attrs:{"draggable":"","title":_vm.useFlvjs?_vm.url+'.flv':_vm.url},on:{"on-ok":_vm.onClosePreview,"on-cancel":_vm.onClosePreview}},'Modal',_vm.$attrs,false),_vm.$listeners),[_c('video',{directives:[{name:"show",rawName:"v-show",value:(_vm.useFlvjs),expression:"useFlvjs"}],ref:"flvjs",staticStyle:{"width":"488px","height":"275px"}}),_c('canvas',{directives:[{name:"show",rawName:"v-show",value:(!_vm.useFlvjs),expression:"!useFlvjs"}],staticStyle:{"background":"black"},attrs:{"id":"canvas","width":"488","height":"275"}}),_c('div',{attrs:{"slot":"footer"},slot:"footer"},[_c('mu-switch',{attrs:{"label":"采用flv.js"},model:{value:(_vm.useFlvjs),callback:function ($$v) {_vm.useFlvjs=$$v},expression:"useFlvjs"}})],1)])}
+var Jessibucavue_type_template_id_ee505806_scoped_true_staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./src/components/Jessibuca.vue?vue&type=template&id=cb1c9026&scoped=true&
+// CONCATENATED MODULE: ./src/components/Jessibuca.vue?vue&type=template&id=ee505806&scoped=true&
 
 // CONCATENATED MODULE: ./node_modules/flv.js/src/utils/polyfill.js
 /*
@@ -11481,6 +11481,8 @@ let flvPlayer = null;
                     type: 'flv',
                     isLive: true,
                     url: this.url+'.flv'
+                },{
+                    fixAudioTimestampGap: false
                 });
                 flvPlayer.attachMediaElement(this.$refs.flvjs);
                 flvPlayer.load();
@@ -11640,11 +11642,11 @@ function normalizeComponent (
 
 var component = normalizeComponent(
   components_Jessibucavue_type_script_lang_js_,
-  Jessibucavue_type_template_id_cb1c9026_scoped_true_render,
-  Jessibucavue_type_template_id_cb1c9026_scoped_true_staticRenderFns,
+  Jessibucavue_type_template_id_ee505806_scoped_true_render,
+  Jessibucavue_type_template_id_ee505806_scoped_true_staticRenderFns,
   false,
   null,
-  "cb1c9026",
+  "ee505806",
   null
   
 )

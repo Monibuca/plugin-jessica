@@ -65,6 +65,8 @@ export default {
                     type: 'flv',
                     isLive: true,
                     url: this.url+'.flv'
+                },{
+                    fixAudioTimestampGap: false
                 });
                 flvPlayer.attachMediaElement(this.$refs.flvjs);
                 flvPlayer.load();
