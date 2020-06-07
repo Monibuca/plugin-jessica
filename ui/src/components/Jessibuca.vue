@@ -3,27 +3,28 @@
         v-bind="$attrs"
         draggable
         v-on="$listeners"
-        :title="useFlvjs?url+'.flv':url"
+        :title="targetURL"
         @on-ok="onClosePreview"
         @on-cancel="onClosePreview"
     >
-        <video ref="flvjs" v-show="useFlvjs" style="width:488px;height:275px"></video>
-        <canvas id="canvas" width="488" height="275" style="background: black" v-show="!useFlvjs"/>
+        <video ref="flvjs" v-show="protocol=='flv.js'" style="width:488px;height:275px"></video>
+        <canvas id="canvas" width="488" height="275" style="background: black" v-show="protocol!='flv.js'" />
         <div slot="footer">
+            <mu-radio value="ws-raw" v-model="protocol" label="ws-raw"></mu-radio>
+            <mu-radio value="ws-flv" v-model="protocol" label="ws-flv"></mu-radio>
+            <mu-radio value="http-flv" v-model="protocol" label="http-flv"></mu-radio>
+            <mu-radio value="flv.js" v-model="protocol" label="flv.js"></mu-radio>
             <!-- <Button v-if="audioEnabled" @click="turnOff" icon="md-volume-up" />
-            <Button v-else @click="turnOn" icon="md-volume-off"></Button> -->
-            <mu-switch v-model="useFlvjs" label="采用flv.js"></mu-switch>
+            <Button v-else @click="turnOn" icon="md-volume-off"></Button>-->
         </div>
     </Modal>
 </template>
 <style scoped>
-
-
 </style>
 <script>
 let h5lc = null;
 let flvPlayer = null;
-import flvjs from "flv.js"
+import flvjs from "flv.js";
 export default {
     name: "Jessibuca",
     props: {
@@ -33,8 +34,9 @@ export default {
     data() {
         return {
             audioEnabled: true,
-            useFlvjs:false,
+            protocol: "ws-raw",
             url: "",
+            targetURL: "",
             decoderTable: {
                 AAC_AVC: "ff",
                 AAC_H265: "hevc_aac",
@@ -58,23 +60,41 @@ export default {
                 decoder: value
             });
         },
-        useFlvjs(v){
-            if(v){
-                h5lc.close();
-                flvPlayer = flvjs.createPlayer({
-                    type: 'flv',
-                    isLive: true,
-                    url: this.url+'.flv'
-                },{
-                    fixAudioTimestampGap: false
-                });
-                flvPlayer.attachMediaElement(this.$refs.flvjs);
-                flvPlayer.load();
-                flvPlayer.play();
-            }else{
-                 h5lc.play(this.url);
-                 flvPlayer.destroy()
+        protocol(v) {
+            switch (v) {
+                case "ws-raw":
+                    this.targetURL = "ws://" + this.url;
+                    break;
+                case "ws-flv":
+                    this.targetURL = "ws://" + this.url + ".flv";
+                    break;
+                case "http-flv":
+                    this.targetURL = "http://" + this.url.replace("8080","2020") + ".flv";
+                    break;
+                case "flv.js":
+                    h5lc.close();
+                    this.targetURL = "ws://" + this.url + ".flv"
+                    flvPlayer = flvjs.createPlayer(
+                        {
+                            type: "flv",
+                            isLive: true,
+                            url: this.targetURL
+                        },
+                        {
+                            fixAudioTimestampGap: false
+                        }
+                    );
+                    flvPlayer.attachMediaElement(this.$refs.flvjs);
+                    flvPlayer.load();
+                    flvPlayer.play();
             }
+           if(v!="flv.js"){
+               h5lc.play(this.targetURL);
+               if(flvPlayer) {
+                    flvPlayer.destroy();
+                    flvPlayer = null;
+                }
+           }
         }
     },
     computed: {
@@ -101,11 +121,16 @@ export default {
     methods: {
         play(url) {
             this.url = url;
-            h5lc.play(url);
+            if (this.protocol == "ws-raw") {
+                this.targetURL = "ws://" + url;
+                h5lc.play(this.targetURL);
+            } else {
+                this.protocol = "ws-raw";
+            }
         },
         onClosePreview() {
             h5lc.close();
-            flvPlayer.destroy()
+            flvPlayer.destroy();
         },
         destroy() {
             h5lc.destroy();

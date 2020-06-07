@@ -39,7 +39,7 @@ export default {
     methods: {
         preview({row}) {
             this.currentStream = row;
-            this.onPlay("ws://" + this.host + "/" + row.StreamPath);
+            this.onPlay(this.host + "/" + row.StreamPath);
         },
         onPlay(url) {
             this.showPreview = true;
