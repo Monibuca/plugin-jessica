@@ -29,7 +29,8 @@ export default {
     name: "Jessibuca",
     props: {
         audioCodec: String,
-        videoCodec: String
+        videoCodec: String,
+        port:String
     },
     data() {
         return {
@@ -57,7 +58,8 @@ export default {
             }
             h5lc = new window.Jessibuca({
                 canvas: document.getElementById("canvas"),
-                decoder: value
+                decoder: value,
+                videoBuffer:0.2
             });
         },
         protocol(v) {
@@ -69,7 +71,7 @@ export default {
                     this.targetURL = "ws://" + this.url + ".flv";
                     break;
                 case "http-flv":
-                    this.targetURL = "http://" + this.url.replace("8080","2020") + ".flv";
+                    this.targetURL = "http://" + this.url.replace(this.port,"2020") + ".flv";
                     break;
                 case "flv.js":
                     h5lc.close();
