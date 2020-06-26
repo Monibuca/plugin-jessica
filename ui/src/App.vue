@@ -6,7 +6,7 @@
             <template>
         </stream-table>
         <Jessibuca ref="jessibuca" v-model="showPreview"
-            :port="ListenAddr.split(":").pop()"
+            :port="ListenAddr.split(':').pop()"
             :videoCodec="currentStream && CodecID(currentStream.VideoInfo.CodecID)"
             :audioCodec="currentStream && SoundFormat(currentStream.AudioInfo.SoundFormat)"></Jessibuca>
         <!-- <Subscribers :data="currentStream && currentStream.SubscriberInfo || []" v-model="showSubscribers" /> -->
