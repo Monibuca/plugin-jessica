@@ -30,7 +30,13 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 	baseStream := Subscriber{Sign: sign}
 	baseStream.ID = conn.RemoteAddr().String()
 	defer conn.Close()
-	defer baseStream.Close()
+	go func() {
+		b := []byte{0}
+		for _, err := conn.Read(b); err == nil; _, err = conn.Read(b) {
+
+		}
+		baseStream.Close()
+	}()
 	if isFlv {
 		baseStream.Type = "JessicaFlv"
 		baseStream.OnData = func(packet *avformat.SendPacket) error {
