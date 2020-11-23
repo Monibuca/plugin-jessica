@@ -11,9 +11,16 @@ import (
 
 	. "github.com/Monibuca/engine/v2"
 	. "github.com/logrusorgru/aurora"
+	"golang.org/x/sync/errgroup"
 )
 
-var config = new(ListenerConfig)
+var config = &struct {
+	ListenAddr    string
+	CertFile      string
+	KeyFile       string
+	ListenAddrTLS string
+}{}
+
 var publicPath string
 
 func init() {
@@ -29,7 +36,19 @@ func init() {
 func run() {
 	Print(Green("server Jessica start at"), BrightBlue(config.ListenAddr))
 	http.HandleFunc("/jessibuca/", jessibuca)
-	log.Fatal(http.ListenAndServe(config.ListenAddr, http.HandlerFunc(WsHandler)))
+	var g errgroup.Group
+	if config.ListenAddrTLS != "" {
+		g.Go(func() error {
+			return http.ListenAndServeTLS(config.ListenAddrTLS, config.CertFile, config.KeyFile, http.HandlerFunc(WsHandler))
+		})
+	}
+	if config.ListenAddr != "" {
+		g.Go(func() error { return http.ListenAndServe(config.ListenAddr, http.HandlerFunc(WsHandler)) })
+	}
+	if err := g.Wait(); err != nil {
+		log.Fatal(err)
+	}
+
 }
 func jessibuca(w http.ResponseWriter, r *http.Request) {
 	filePath := strings.TrimPrefix(r.URL.Path, "/jessibuca")

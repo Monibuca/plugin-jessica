@@ -8,4 +8,5 @@ require (
 	github.com/gobwas/pool v0.2.0 // indirect
 	github.com/gobwas/ws v1.0.2
 	github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381
+	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 )

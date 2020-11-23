@@ -9,9 +9,12 @@ Jessica
 
 ## 配置
 
-目前仅有的配置是监听的端口号
+可配置WS协议和WSS协议监听地址端口
 
 ```toml
 [Jessica]
 ListenAddr = ":8080"
+CertFile = "../foo.cert"
+KeyFile  = "../foo.key"
+ListenAddrTLS = ":8088"
 ```
