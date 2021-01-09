@@ -2,7 +2,6 @@ package jessica
 
 import (
 	"io/ioutil"
-	"log"
 	"mime"
 	"net/http"
 	"path"
@@ -10,8 +9,8 @@ import (
 	"strings"
 
 	. "github.com/Monibuca/engine/v2"
+	"github.com/Monibuca/utils"
 	. "github.com/logrusorgru/aurora"
-	"golang.org/x/sync/errgroup"
 )
 
 var config = &struct {
@@ -36,19 +35,7 @@ func init() {
 func run() {
 	Print(Green("server Jessica start at"), BrightBlue(config.ListenAddr))
 	http.HandleFunc("/jessibuca/", jessibuca)
-	var g errgroup.Group
-	if config.ListenAddrTLS != "" {
-		g.Go(func() error {
-			return http.ListenAndServeTLS(config.ListenAddrTLS, config.CertFile, config.KeyFile, http.HandlerFunc(WsHandler))
-		})
-	}
-	if config.ListenAddr != "" {
-		g.Go(func() error { return http.ListenAndServe(config.ListenAddr, http.HandlerFunc(WsHandler)) })
-	}
-	if err := g.Wait(); err != nil {
-		log.Fatal(err)
-	}
-
+	utils.ListenAddrs(config.ListenAddr, config.ListenAddrTLS, config.CertFile, config.KeyFile, http.HandlerFunc(WsHandler))
 }
 func jessibuca(w http.ResponseWriter, r *http.Request) {
 	filePath := strings.TrimPrefix(r.URL.Path, "/jessibuca")
