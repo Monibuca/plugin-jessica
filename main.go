@@ -13,12 +13,12 @@ import (
 	. "github.com/logrusorgru/aurora"
 )
 
-var config = &struct {
+var config struct {
 	ListenAddr    string
 	CertFile      string
 	KeyFile       string
 	ListenAddrTLS string
-}{}
+}
 
 var publicPath string
 
@@ -26,16 +26,21 @@ func init() {
 	plugin := &PluginConfig{
 		Name:   "Jessica",
 		Type:   PLUGIN_SUBSCRIBER,
-		Config: config,
+		Config: &config,
 		Run:    run,
 	}
 	InstallPlugin(plugin)
 	publicPath = filepath.Join(plugin.Dir, "ui", "public")
 }
 func run() {
-	Print(Green("server Jessica start at"), BrightBlue(config.ListenAddr))
 	http.HandleFunc("/jessibuca/", jessibuca)
-	utils.ListenAddrs(config.ListenAddr, config.ListenAddrTLS, config.CertFile, config.KeyFile, http.HandlerFunc(WsHandler))
+	if config.ListenAddr != "" || config.ListenAddrTLS != "" {
+		Print(Green("Jessica start at"), BrightBlue(config.ListenAddr), BrightBlue(config.ListenAddrTLS))
+		utils.ListenAddrs(config.ListenAddr, config.ListenAddrTLS, config.CertFile, config.KeyFile, http.HandlerFunc(WsHandler))
+	} else {
+		Print(Green("Jessica start reuse gateway port"))
+		http.HandleFunc("/jessica/", WsHandler)
+	}
 }
 func jessibuca(w http.ResponseWriter, r *http.Request) {
 	filePath := strings.TrimPrefix(r.URL.Path, "/jessibuca")

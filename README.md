@@ -18,3 +18,5 @@ CertFile = "../foo.cert"
 KeyFile  = "../foo.key"
 ListenAddrTLS = ":8088"
 ```
+
+- 如果不设置ListenAddr和ListenAddrTLS，将共用网关的端口监听

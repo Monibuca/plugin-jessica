@@ -3,13 +3,15 @@ package jessica
 import (
 	"encoding/binary"
 	"net/http"
-	"strings"
+	"regexp"
 
 	. "github.com/Monibuca/engine/v2"
 	"github.com/Monibuca/engine/v2/avformat"
 	"github.com/Monibuca/engine/v2/pool"
 	"github.com/gobwas/ws"
 )
+
+var streamPathReg = regexp.MustCompile("/(jessica/)?((.+)(\\.flv)|(.+))")
 
 func WsHandler(w http.ResponseWriter, r *http.Request) {
 	sign := r.URL.Query().Get("sign")
@@ -18,9 +20,11 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(403)
 		return
 	}
-	streamPath := strings.TrimLeft(r.RequestURI, "/")
-	if strings.HasSuffix(streamPath, ".flv") {
-		streamPath = strings.TrimRight(streamPath, ".flv")
+	parts := streamPathReg.FindStringSubmatch(r.RequestURI)
+	stringPath := parts[3]
+	if stringPath == "" {
+		stringPath = parts[5]
+	} else {
 		isFlv = true
 	}
 	conn, _, _, err := ws.UpgradeHTTP(r, w)
