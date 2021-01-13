@@ -21,9 +21,9 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	parts := streamPathReg.FindStringSubmatch(r.RequestURI)
-	stringPath := parts[3]
-	if stringPath == "" {
-		stringPath = parts[5]
+	streamPath := parts[3]
+	if streamPath == "" {
+		streamPath = parts[5]
 	} else {
 		isFlv = true
 	}
