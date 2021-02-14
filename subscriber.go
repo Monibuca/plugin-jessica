@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"regexp"
 
-	. "github.com/Monibuca/engine/v2"
-	"github.com/Monibuca/engine/v2/avformat"
-	"github.com/Monibuca/engine/v2/pool"
+	. "github.com/Monibuca/engine/v3"
+	"github.com/Monibuca/utils/v3"
+	"github.com/Monibuca/utils/v3/codec"
 	"github.com/gobwas/ws"
 )
 
@@ -16,10 +16,10 @@ var streamPathReg = regexp.MustCompile("/(jessica/)?((.+)(\\.flv)|(.+))")
 func WsHandler(w http.ResponseWriter, r *http.Request) {
 	sign := r.URL.Query().Get("sign")
 	isFlv := false
-	if err := AuthHooks.Trigger(sign); err != nil {
-		w.WriteHeader(403)
-		return
-	}
+	// if err := AuthHooks.Trigger(sign); err != nil {
+	// 	w.WriteHeader(403)
+	// 	return
+	// }
 	parts := streamPathReg.FindStringSubmatch(r.RequestURI)
 	streamPath := parts[3]
 	if streamPath == "" {
@@ -31,8 +31,10 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	baseStream := Subscriber{Sign: sign}
-	baseStream.ID = conn.RemoteAddr().String()
+	baseStream := Subscriber{Sign: sign, ID: r.RemoteAddr, Type: "Jessica"}
+	if isFlv {
+		baseStream.Type = "JessicaFlv"
+	}
 	defer conn.Close()
 	go func() {
 		b := []byte{0}
@@ -41,55 +43,68 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		baseStream.Close()
 	}()
-	if isFlv {
-		baseStream.Type = "JessicaFlv"
-		baseStream.OnData = func(packet *avformat.SendPacket) error {
-			err := ws.WriteHeader(conn, ws.Header{
+	if baseStream.Subscribe(streamPath) == nil {
+		at := baseStream.GetAudioTrack("aac")
+		vt := baseStream.OriginVideoTrack
+		var writeAV func(byte, uint32, []byte)
+		if isFlv {
+			if err := ws.WriteHeader(conn, ws.Header{
 				Fin:    true,
 				OpCode: ws.OpBinary,
-				Length: int64(len(packet.Payload) + 15),
-			})
-			if err != nil {
-				return err
+				Length: int64(13),
+			}); err != nil {
+				return
 			}
-			return avformat.WriteFLVTag(conn, packet)
+			if _, err = conn.Write(codec.FLVHeader); err != nil {
+				return
+			}
+			writeAV = func(t byte, ts uint32, payload []byte) {
+				ws.WriteHeader(conn, ws.Header{
+					Fin:    true,
+					OpCode: ws.OpBinary,
+					Length: int64(len(payload) + 15),
+				})
+				codec.WriteFLVTag(conn, t, ts, payload)
+			}
+		} else {
+			writeAV = func(t byte, ts uint32, payload []byte) {
+				ws.WriteHeader(conn, ws.Header{
+					Fin:    true,
+					OpCode: ws.OpBinary,
+					Length: int64(len(payload) + 5),
+				})
+				head := utils.GetSlice(5)
+				defer utils.RecycleSlice(head)
+				head[0] = t - 7
+				binary.BigEndian.PutUint32(head[1:5], ts)
+				if _, err = conn.Write(head); err != nil {
+					return
+				}
+				conn.Write(payload)
+			}
 		}
-		if err := ws.WriteHeader(conn, ws.Header{
-			Fin:    true,
-			OpCode: ws.OpBinary,
-			Length: int64(13),
-		}); err != nil {
-			return
+		if vt != nil {
+			writeAV(codec.FLV_TAG_TYPE_VIDEO, 0, vt.RtmpTag)
+			baseStream.OnVideo = func(pack VideoPack) {
+				payload := codec.Nalu2RTMPTag(pack.Payload)
+				defer utils.RecycleSlice(payload)
+				writeAV(codec.FLV_TAG_TYPE_VIDEO, pack.Timestamp, payload)
+			}
 		}
-		if _, err = conn.Write(avformat.FLVHeader); err != nil {
-			return
+		if at != nil {
+			writeAV(codec.FLV_TAG_TYPE_AUDIO, 0, at.RtmpTag)
+			baseStream.OnAudio = func(pack AudioPack) {
+				var aac byte
+				if at.SoundFormat == 10 {
+					aac = at.RtmpTag[0]
+				}
+				payload := codec.Audio2RTMPTag(aac, pack.Payload)
+				defer utils.RecycleSlice(payload)
+				writeAV(codec.FLV_TAG_TYPE_AUDIO, pack.Timestamp, payload)
+			}
 		}
+		baseStream.Play(r.Context(), at, vt)
 	} else {
-		baseStream.Type = "Jessica"
-		baseStream.OnData = func(packet *avformat.SendPacket) error {
-			err := ws.WriteHeader(conn, ws.Header{
-				Fin:    true,
-				OpCode: ws.OpBinary,
-				Length: int64(len(packet.Payload) + 5),
-			})
-			if err != nil {
-				return err
-			}
-			head := pool.GetSlice(5)
-			head[0] = packet.Type - 7
-			binary.BigEndian.PutUint32(head[1:5], packet.Timestamp)
-			if _, err = conn.Write(head); err != nil {
-				return err
-			}
-			pool.RecycleSlice(head)
-			//if p.Header[0] == 2 {
-			//	fmt.Printf("%6d %X\n", (uint32(p.Packet.Payload[5])<<24)|(uint32(p.Packet.Payload[6])<<16)|(uint32(p.Packet.Payload[7])<<8)|uint32(p.Packet.Payload[8]), p.Packet.Payload[9])
-			//}
-			if _, err = conn.Write(packet.Payload); err != nil {
-				return err
-			}
-			return nil
-		}
+		w.WriteHeader(404)
 	}
-	baseStream.Subscribe(streamPath)
 }
