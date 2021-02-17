@@ -31,7 +31,7 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	baseStream := Subscriber{Sign: sign, ID: r.RemoteAddr, Type: "Jessica"}
+	baseStream := Subscriber{Sign: sign, ID: r.RemoteAddr, Type: "Jessica", Ctx2: r.Context()}
 	if isFlv {
 		baseStream.Type = "JessicaFlv"
 	}
@@ -41,7 +41,6 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 		for _, err := conn.Read(b); err == nil; _, err = conn.Read(b) {
 
 		}
-		baseStream.Close()
 	}()
 	if baseStream.Subscribe(streamPath) == nil {
 		at := baseStream.GetAudioTrack("aac")
@@ -103,7 +102,7 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 				writeAV(codec.FLV_TAG_TYPE_AUDIO, pack.Timestamp, payload)
 			}
 		}
-		baseStream.Play(r.Context(), at, vt)
+		baseStream.Play(at, vt)
 	} else {
 		w.WriteHeader(404)
 	}

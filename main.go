@@ -2,7 +2,6 @@ package jessica
 
 import (
 	"net/http"
-	"path/filepath"
 
 	. "github.com/Monibuca/engine/v3"
 	"github.com/Monibuca/utils/v3"
@@ -16,8 +15,6 @@ var config struct {
 	ListenAddrTLS string
 }
 
-var publicPath string
-
 func init() {
 	plugin := &PluginConfig{
 		Name:   "Jessica",
@@ -25,7 +22,6 @@ func init() {
 		Run:    run,
 	}
 	InstallPlugin(plugin)
-	publicPath = filepath.Join(plugin.Dir, "ui", "public")
 }
 func run() {
 	if config.ListenAddr != "" || config.ListenAddrTLS != "" {
