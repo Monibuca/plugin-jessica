@@ -85,7 +85,7 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 		if vt != nil {
 			writeAV(codec.FLV_TAG_TYPE_VIDEO, 0, vt.RtmpTag)
 			baseStream.OnVideo = func(pack VideoPack) {
-				payload := codec.Nalu2RTMPTag(pack.Payload)
+				payload := pack.ToRTMPTag()
 				defer utils.RecycleSlice(payload)
 				writeAV(codec.FLV_TAG_TYPE_VIDEO, pack.Timestamp, payload)
 			}
@@ -97,7 +97,7 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 				if at.SoundFormat == 10 {
 					aac = at.RtmpTag[0]
 				}
-				payload := codec.Audio2RTMPTag(aac, pack.Payload)
+				payload := pack.ToRTMPTag(aac)
 				defer utils.RecycleSlice(payload)
 				writeAV(codec.FLV_TAG_TYPE_AUDIO, pack.Timestamp, payload)
 			}
