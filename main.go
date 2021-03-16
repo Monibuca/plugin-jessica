@@ -3,6 +3,7 @@ package jessica
 import (
 	"io/ioutil"
 	"mime"
+	"embed"
 	"net/http"
 	"path"
 	"path/filepath"
@@ -22,11 +23,16 @@ var config struct {
 
 var publicPath string
 
+//go:embed ui/*
+//go:embed README.md
+var ui embed.FS
+
 func init() {
 	plugin := &PluginConfig{
 		Name:   "Jessica",
 		Type:   PLUGIN_SUBSCRIBER,
 		Config: &config,
+		UIFile: &ui,
 		Run:    run,
 	}
 	InstallPlugin(plugin)
