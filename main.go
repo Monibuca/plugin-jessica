@@ -1,11 +1,10 @@
 package jessica
 
 import (
-	"io/ioutil"
+	"embed"
 	"mime"
 	"net/http"
 	"path"
-	"path/filepath"
 	"strings"
 
 	. "github.com/Monibuca/engine/v2"
@@ -20,6 +19,10 @@ var config struct {
 	ListenAddrTLS string
 }
 
+//go:embed ui/*
+//go:embed README.md
+var ui embed.FS
+
 var publicPath string
 
 func init() {
@@ -28,9 +31,9 @@ func init() {
 		Type:   PLUGIN_SUBSCRIBER,
 		Config: &config,
 		Run:    run,
+		UIFile: &ui,
 	}
 	InstallPlugin(plugin)
-	publicPath = filepath.Join(plugin.Dir, "ui", "public")
 }
 func run() {
 	http.HandleFunc("/jessibuca/", jessibuca)
@@ -47,7 +50,7 @@ func jessibuca(w http.ResponseWriter, r *http.Request) {
 	if mime := mime.TypeByExtension(path.Ext(filePath)); mime != "" {
 		w.Header().Set("Content-Type", mime)
 	}
-	if f, err := ioutil.ReadFile(filepath.Join(publicPath, filePath)); err == nil {
+	if f, err := ui.ReadFile("ui/public" + filePath); err == nil {
 		if _, err = w.Write(f); err != nil {
 			w.WriteHeader(500)
 		}
