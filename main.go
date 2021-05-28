@@ -3,6 +3,7 @@ package jessica
 import (
 	"embed"
 	"mime"
+	"embed"
 	"net/http"
 	"path"
 	"strings"
@@ -25,11 +26,16 @@ var ui embed.FS
 
 var publicPath string
 
+//go:embed ui/*
+//go:embed README.md
+var ui embed.FS
+
 func init() {
 	plugin := &PluginConfig{
 		Name:   "Jessica",
 		Type:   PLUGIN_SUBSCRIBER,
 		Config: &config,
+		UIFile: &ui,
 		Run:    run,
 		UIFile: &ui,
 	}
