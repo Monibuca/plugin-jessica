@@ -14,7 +14,6 @@ import (
 var streamPathReg = regexp.MustCompile("/(jessica/)?((.+)(\\.flv)|(.+))")
 
 func WsHandler(w http.ResponseWriter, r *http.Request) {
-	sign := r.URL.Query().Get("sign")
 	isFlv := false
 	// if err := AuthHooks.Trigger(sign); err != nil {
 	// 	w.WriteHeader(403)
@@ -31,7 +30,7 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	baseStream := Subscriber{Sign: sign, ID: r.RemoteAddr, Type: "Jessica", Ctx2: r.Context()}
+	baseStream := Subscriber{ID: r.RemoteAddr, Type: "Jessica", Ctx2: r.Context(), ByteStreamFormat: true}
 	if isFlv {
 		baseStream.Type = "JessicaFlv"
 	}
@@ -41,10 +40,10 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 		for _, err := conn.Read(b); err == nil; _, err = conn.Read(b) {
 
 		}
+		baseStream.Close()
 	}()
 	if baseStream.Subscribe(streamPath) == nil {
-		at := baseStream.GetAudioTrack("aac")
-		vt := baseStream.OriginVideoTrack
+		vt, at := baseStream.WaitVideoTrack(), baseStream.WaitAudioTrack()
 		var writeAV func(byte, uint32, []byte)
 		if isFlv {
 			if err := ws.WriteHeader(conn, ws.Header{
@@ -83,19 +82,15 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if vt != nil {
-			writeAV(codec.FLV_TAG_TYPE_VIDEO, 0, vt.RtmpTag)
+			writeAV(codec.FLV_TAG_TYPE_VIDEO, 0, vt.ExtraData.Payload)
 			baseStream.OnVideo = func(pack VideoPack) {
-				payload := pack.ToRTMPTag()
-				defer utils.RecycleSlice(payload)
-				writeAV(codec.FLV_TAG_TYPE_VIDEO, pack.Timestamp, payload)
+				writeAV(codec.FLV_TAG_TYPE_VIDEO, pack.Timestamp, pack.Payload)
 			}
 		}
 		if at != nil {
-			writeAV(codec.FLV_TAG_TYPE_AUDIO, 0, at.RtmpTag)
+			writeAV(codec.FLV_TAG_TYPE_AUDIO, 0, at.ExtraData)
 			baseStream.OnAudio = func(pack AudioPack) {
-				payload := pack.ToRTMPTag(at.RtmpTag[0])
-				defer utils.RecycleSlice(payload)
-				writeAV(codec.FLV_TAG_TYPE_AUDIO, pack.Timestamp, payload)
+				writeAV(codec.FLV_TAG_TYPE_AUDIO, pack.Timestamp, pack.Payload)
 			}
 		}
 		baseStream.Play(at, vt)
