@@ -30,7 +30,7 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	baseStream := Subscriber{ID: r.RemoteAddr, Type: "Jessica", Ctx2: r.Context(), ByteStreamFormat: true}
+	baseStream := Subscriber{ID: r.RemoteAddr, Type: "Jessica", Ctx2: r.Context()}
 	if isFlv {
 		baseStream.Type = "JessicaFlv"
 	}
