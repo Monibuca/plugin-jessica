@@ -15,11 +15,11 @@ var streamPathReg = regexp.MustCompile("/(jessica/)?((.+)(\\.flv)|(.+))")
 
 func WsHandler(w http.ResponseWriter, r *http.Request) {
 	isFlv := false
-	// if err := AuthHooks.Trigger(sign); err != nil {
-	// 	w.WriteHeader(403)
-	// 	return
-	// }
 	parts := streamPathReg.FindStringSubmatch(r.RequestURI)
+	if parts == nil {
+		w.WriteHeader(404)
+		return
+	}
 	streamPath := parts[3]
 	if streamPath == "" {
 		streamPath = parts[5]
