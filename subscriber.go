@@ -83,14 +83,14 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		if vt != nil {
 			writeAV(codec.FLV_TAG_TYPE_VIDEO, 0, vt.ExtraData.Payload)
-			baseStream.OnVideo = func(pack VideoPack) {
-				writeAV(codec.FLV_TAG_TYPE_VIDEO, pack.Timestamp, pack.Payload)
+			baseStream.OnVideo = func(ts uint32, pack *VideoPack) {
+				writeAV(codec.FLV_TAG_TYPE_VIDEO, ts, pack.Payload)
 			}
 		}
 		if at != nil {
 			writeAV(codec.FLV_TAG_TYPE_AUDIO, 0, at.ExtraData)
-			baseStream.OnAudio = func(pack AudioPack) {
-				writeAV(codec.FLV_TAG_TYPE_AUDIO, pack.Timestamp, pack.Payload)
+			baseStream.OnAudio = func(ts uint32, pack *AudioPack) {
+				writeAV(codec.FLV_TAG_TYPE_AUDIO, ts, pack.Payload)
 			}
 		}
 		baseStream.Play(at, vt)
