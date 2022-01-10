@@ -16,12 +16,11 @@ var config struct {
 }
 
 func init() {
-	plugin := &PluginConfig{
+	plugin := PluginConfig{
 		Name:   "Jessica",
 		Config: &config,
-		Run:    run,
 	}
-	InstallPlugin(plugin)
+	plugin.Install(run)
 }
 func run() {
 	if config.ListenAddr != "" || config.ListenAddrTLS != "" {
