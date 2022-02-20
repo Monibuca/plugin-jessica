@@ -1,33 +1,25 @@
 package jessica
 
 import (
-	"net/http"
-
-	. "github.com/Monibuca/engine/v3"
-	"github.com/Monibuca/utils/v3"
+	. "github.com/Monibuca/engine/v4"
+	"github.com/Monibuca/engine/v4/config"
 	. "github.com/logrusorgru/aurora"
+	"go.uber.org/zap"
 )
 
-var config struct {
-	ListenAddr    string
-	CertFile      string
-	KeyFile       string
-	ListenAddrTLS string
+type JessicaConfig struct {
+	config.HTTP
+	config.Subscribe
 }
 
-func init() {
-	plugin := PluginConfig{
-		Name:   "Jessica",
-		Config: &config,
-	}
-	plugin.Install(run)
-}
-func run() {
-	if config.ListenAddr != "" || config.ListenAddrTLS != "" {
-		utils.Print(Green("Jessica start at"), BrightBlue(config.ListenAddr), BrightBlue(config.ListenAddrTLS))
-		utils.ListenAddrs(config.ListenAddr, config.ListenAddrTLS, config.CertFile, config.KeyFile, http.HandlerFunc(WsHandler))
+var jConfig JessicaConfig
+var plugin = InstallPlugin(&jConfig)
+
+func (j *JessicaConfig) Update(override config.Config) {
+	if override.Has("ListenAddr") || override.Has("ListenAddrTLS") {
+		plugin.Info(Green("Jessica Server Start").String(), zap.String("ListenAddr", j.ListenAddr), zap.String("ListenAddrTLS", j.ListenAddrTLS))
+		j.Listen(plugin, &jConfig)
 	} else {
-		utils.Print(Green("Jessica start reuse gateway port"))
-		http.HandleFunc("/jessica/", WsHandler)
+		plugin.Info(Green("Jessica start reuse engine port").String())
 	}
 }

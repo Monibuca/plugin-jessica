@@ -2,18 +2,103 @@ package jessica
 
 import (
 	"encoding/binary"
+	"net"
 	"net/http"
 	"regexp"
 
-	. "github.com/Monibuca/engine/v3"
-	"github.com/Monibuca/utils/v3"
-	"github.com/Monibuca/utils/v3/codec"
+	. "github.com/Monibuca/engine/v4"
+	"github.com/Monibuca/engine/v4/codec"
+	"github.com/Monibuca/engine/v4/common"
+	"github.com/Monibuca/engine/v4/util"
 	"github.com/gobwas/ws"
 )
 
 var streamPathReg = regexp.MustCompile("/(jessica/)?((.+)(\\.flv)|(.+))")
 
-func WsHandler(w http.ResponseWriter, r *http.Request) {
+type JessicaSubscriber struct {
+	Subscriber
+	head []byte
+}
+
+func (j *JessicaSubscriber) WriteAVCC(avcc net.Buffers) {
+	err := ws.WriteHeader(j, ws.Header{
+		Fin:    true,
+		OpCode: ws.OpBinary,
+		Length: int64(util.SizeOfBuffers(avcc) + 5),
+	})
+	defer func() {
+		if err != nil {
+			j.Bye()
+		}
+	}()
+	if err != nil {
+		return
+	}
+	if _, err = j.Write(j.head); err != nil {
+		return
+	}
+	_, err = avcc.WriteTo(j)
+}
+
+func (j *JessicaSubscriber) OnEvent(event any) {
+	switch v := event.(type) {
+	case AudioDeConf:
+		if j.AudioTrack.IsAAC() {
+			j.head[0] = 1
+			binary.BigEndian.PutUint32(j.head[1:], 0)
+			j.WriteAVCC(net.Buffers{v.AVCC})
+		}
+	case VideoDeConf:
+		j.head[0] = 2
+		binary.BigEndian.PutUint32(j.head[1:], 0)
+		j.WriteAVCC(net.Buffers(v.AVCC))
+	case AudioFrame:
+		j.head[0] = 1
+		binary.BigEndian.PutUint32(j.head[1:], v.AbsTime)
+		j.WriteAVCC(v.AVCC)
+	case VideoFrame:
+		j.head[0] = 2
+		binary.BigEndian.PutUint32(j.head[1:], v.AbsTime)
+		j.WriteAVCC(v.AVCC)
+	default:
+		j.Subscriber.OnEvent(event)
+	}
+}
+
+type JessicaFLV struct {
+	Subscriber
+}
+
+func (j *JessicaFLV) WriteFLVTag(tag net.Buffers) {
+	if err := ws.WriteHeader(j, ws.Header{
+		Fin:    true,
+		OpCode: ws.OpBinary,
+		Length: int64(util.SizeOfBuffers(tag)),
+	}); err != nil {
+		j.Bye()
+		return
+	}
+	if _, err := tag.WriteTo(j); err != nil {
+		j.Bye()
+	}
+}
+
+func (j *JessicaFLV) OnEvent(event any) {
+	switch v := event.(type) {
+	case AudioDeConf:
+		if j.AudioTrack.IsAAC() {
+			j.WriteFLVTag(v.FLV)
+		}
+	case VideoDeConf:
+		j.WriteFLVTag(v.FLV)
+	case common.MediaFrame:
+		j.WriteFLVTag(v.GetFLV())
+	default:
+		j.Subscriber.OnEvent(event)
+	}
+}
+
+func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	isFlv := false
 	parts := streamPathReg.FindStringSubmatch(r.RequestURI)
 	if parts == nil {
@@ -30,21 +115,25 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	baseStream := Subscriber{ID: r.RemoteAddr, Type: "Jessica", Ctx2: r.Context()}
+	baseStream := Subscriber{}
+	baseStream.ID = r.RemoteAddr
+	var specific ISubscriber
 	if isFlv {
-		baseStream.Type = "JessicaFlv"
+		specific = &JessicaFLV{baseStream}
+	} else {
+		specific = &JessicaSubscriber{baseStream, make([]byte, 5)}
 	}
-	defer conn.Close()
 	go func() {
 		b := []byte{0}
 		for _, err := conn.Read(b); err == nil; _, err = conn.Read(b) {
 
 		}
-		baseStream.Close()
+		specific.Bye()
 	}()
-	if baseStream.Subscribe(streamPath) == nil {
-		vt, at := baseStream.WaitVideoTrack(), baseStream.WaitAudioTrack()
-		var writeAV func(byte, uint32, []byte)
+
+	if plugin.Subscribe(streamPath, specific) {
+		specific.OnEvent(conn)        //注入writer
+		specific.OnEvent(r.Context()) //注入context
 		if isFlv {
 			if err := ws.WriteHeader(conn, ws.Header{
 				Fin:    true,
@@ -53,47 +142,11 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 			}); err != nil {
 				return
 			}
-			if _, err = conn.Write(codec.FLVHeader); err != nil {
-				return
-			}
-			writeAV = func(t byte, ts uint32, payload []byte) {
-				ws.WriteHeader(conn, ws.Header{
-					Fin:    true,
-					OpCode: ws.OpBinary,
-					Length: int64(len(payload) + 15),
-				})
-				codec.WriteFLVTag(conn, t, ts, payload)
-			}
-		} else {
-			writeAV = func(t byte, ts uint32, payload []byte) {
-				ws.WriteHeader(conn, ws.Header{
-					Fin:    true,
-					OpCode: ws.OpBinary,
-					Length: int64(len(payload) + 5),
-				})
-				head := utils.GetSlice(5)
-				defer utils.RecycleSlice(head)
-				head[0] = t - 7
-				binary.BigEndian.PutUint32(head[1:5], ts)
-				if _, err = conn.Write(head); err != nil {
-					return
-				}
-				conn.Write(payload)
+			if _, err := conn.Write(codec.FLVHeader); err != nil {
+				specific.Bye()
 			}
 		}
-		if vt != nil {
-			writeAV(codec.FLV_TAG_TYPE_VIDEO, 0, vt.ExtraData.Payload)
-			baseStream.OnVideo = func(ts uint32, pack *VideoPack) {
-				writeAV(codec.FLV_TAG_TYPE_VIDEO, ts, pack.Payload)
-			}
-		}
-		if at != nil {
-			writeAV(codec.FLV_TAG_TYPE_AUDIO, 0, at.ExtraData)
-			baseStream.OnAudio = func(ts uint32, pack *AudioPack) {
-				writeAV(codec.FLV_TAG_TYPE_AUDIO, ts, pack.Payload)
-			}
-		}
-		baseStream.Play(at, vt)
+		specific.PlayBlock(specific)
 	} else {
 		w.WriteHeader(404)
 	}
