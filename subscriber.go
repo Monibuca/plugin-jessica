@@ -28,7 +28,7 @@ func (j *JessicaSubscriber) WriteAVCC(avcc net.Buffers) {
 	})
 	defer func() {
 		if err != nil {
-			j.Bye()
+			j.Stop()
 		}
 	}()
 	if err != nil {
@@ -43,15 +43,13 @@ func (j *JessicaSubscriber) WriteAVCC(avcc net.Buffers) {
 func (j *JessicaSubscriber) OnEvent(event any) {
 	switch v := event.(type) {
 	case AudioDeConf:
-		if j.AudioTrack.IsAAC() {
-			j.head[0] = 1
-			binary.BigEndian.PutUint32(j.head[1:], 0)
-			j.WriteAVCC(net.Buffers{v.AVCC})
-		}
+		j.head[0] = 1
+		binary.BigEndian.PutUint32(j.head[1:], 0)
+		j.WriteAVCC(v.AVCC)
 	case VideoDeConf:
 		j.head[0] = 2
 		binary.BigEndian.PutUint32(j.head[1:], 0)
-		j.WriteAVCC(net.Buffers(v.AVCC))
+		j.WriteAVCC(v.AVCC)
 	case AudioFrame:
 		j.head[0] = 1
 		binary.BigEndian.PutUint32(j.head[1:], v.AbsTime)
@@ -75,20 +73,18 @@ func (j *JessicaFLV) WriteFLVTag(tag net.Buffers) {
 		OpCode: ws.OpBinary,
 		Length: int64(util.SizeOfBuffers(tag)),
 	}); err != nil {
-		j.Bye()
+		j.Stop()
 		return
 	}
 	if _, err := tag.WriteTo(j); err != nil {
-		j.Bye()
+		j.Stop()
 	}
 }
 
 func (j *JessicaFLV) OnEvent(event any) {
 	switch v := event.(type) {
 	case AudioDeConf:
-		if j.AudioTrack.IsAAC() {
-			j.WriteFLVTag(v.FLV)
-		}
+		j.WriteFLVTag(v.FLV)
 	case VideoDeConf:
 		j.WriteFLVTag(v.FLV)
 	case common.MediaFrame:
@@ -128,10 +124,10 @@ func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		for _, err := conn.Read(b); err == nil; _, err = conn.Read(b) {
 
 		}
-		specific.Bye()
+		specific.Stop()
 	}()
 
-	if plugin.Subscribe(streamPath, specific) {
+	if err := plugin.Subscribe(streamPath, specific); err == nil {
 		specific.OnEvent(conn)        //注入writer
 		specific.OnEvent(r.Context()) //注入context
 		if isFlv {
@@ -140,14 +136,15 @@ func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				OpCode: ws.OpBinary,
 				Length: int64(13),
 			}); err != nil {
+				specific.Stop()
 				return
 			}
 			if _, err := conn.Write(codec.FLVHeader); err != nil {
-				specific.Bye()
+				specific.Stop()
 			}
 		}
 		specific.PlayBlock(specific)
 	} else {
-		w.WriteHeader(404)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 }
