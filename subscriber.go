@@ -6,11 +6,10 @@ import (
 	"net/http"
 	"regexp"
 
-	. "github.com/Monibuca/engine/v4"
-	"github.com/Monibuca/engine/v4/codec"
-	"github.com/Monibuca/engine/v4/common"
-	"github.com/Monibuca/engine/v4/util"
 	"github.com/gobwas/ws"
+	. "m7s.live/engine/v4"
+	"m7s.live/engine/v4/codec"
+	"m7s.live/engine/v4/util"
 )
 
 var streamPathReg = regexp.MustCompile("/(jessica/)?((.+)(\\.flv)|(.+))")
@@ -50,11 +49,11 @@ func (j *JessicaSubscriber) OnEvent(event any) {
 		j.head[0] = 2
 		binary.BigEndian.PutUint32(j.head[1:], 0)
 		j.WriteAVCC(v.AVCC)
-	case AudioFrame:
+	case *AudioFrame:
 		j.head[0] = 1
 		binary.BigEndian.PutUint32(j.head[1:], v.AbsTime)
 		j.WriteAVCC(v.AVCC)
-	case VideoFrame:
+	case *VideoFrame:
 		j.head[0] = 2
 		binary.BigEndian.PutUint32(j.head[1:], v.AbsTime)
 		j.WriteAVCC(v.AVCC)
@@ -83,11 +82,7 @@ func (j *JessicaFLV) WriteFLVTag(tag net.Buffers) {
 
 func (j *JessicaFLV) OnEvent(event any) {
 	switch v := event.(type) {
-	case AudioDeConf:
-		j.WriteFLVTag(v.FLV)
-	case VideoDeConf:
-		j.WriteFLVTag(v.FLV)
-	case common.MediaFrame:
+	case HaveFLV:
 		j.WriteFLVTag(v.GetFLV())
 	default:
 		j.Subscriber.OnEvent(event)
@@ -112,6 +107,8 @@ func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	baseStream := Subscriber{}
+	baseStream.SetIO(conn)               //注入writer
+	baseStream.SetParentCtx(r.Context()) //注入context
 	baseStream.ID = r.RemoteAddr
 	var specific ISubscriber
 	if isFlv {
@@ -128,8 +125,6 @@ func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	if err := plugin.Subscribe(streamPath, specific); err == nil {
-		specific.OnEvent(conn)        //注入writer
-		specific.OnEvent(r.Context()) //注入context
 		if isFlv {
 			if err := ws.WriteHeader(conn, ws.Header{
 				Fin:    true,
@@ -141,6 +136,7 @@ func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 			if _, err := conn.Write(codec.FLVHeader); err != nil {
 				specific.Stop()
+				return
 			}
 		}
 		specific.PlayBlock(specific)

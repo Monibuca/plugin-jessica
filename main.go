@@ -1,10 +1,11 @@
-package jessica
+package jessica // import "m7s.live/plugin/jessica/v4"
+
 
 import (
-	. "github.com/Monibuca/engine/v4"
-	"github.com/Monibuca/engine/v4/config"
 	. "github.com/logrusorgru/aurora"
 	"go.uber.org/zap"
+	. "m7s.live/engine/v4"
+	"m7s.live/engine/v4/config"
 )
 
 type JessicaConfig struct {
