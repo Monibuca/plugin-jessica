@@ -82,6 +82,17 @@ func (j *JessicaFLV) WriteFLVTag(tag net.Buffers) {
 
 func (j *JessicaFLV) OnEvent(event any) {
 	switch v := event.(type) {
+	case ISubscriber:
+		if err := ws.WriteHeader(j, ws.Header{
+			Fin:    true,
+			OpCode: ws.OpBinary,
+			Length: int64(13),
+		}); err != nil {
+			j.Stop()
+		}
+		if _, err := j.Write(codec.FLVHeader); err != nil {
+			j.Stop()
+		}
 	case HaveFLV:
 		j.WriteFLVTag(v.GetFLV())
 	default:
@@ -124,23 +135,7 @@ func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		specific.Stop()
 	}()
 
-	if err := plugin.Subscribe(streamPath, specific); err == nil {
-		if isFlv {
-			if err := ws.WriteHeader(conn, ws.Header{
-				Fin:    true,
-				OpCode: ws.OpBinary,
-				Length: int64(13),
-			}); err != nil {
-				specific.Stop()
-				return
-			}
-			if _, err := conn.Write(codec.FLVHeader); err != nil {
-				specific.Stop()
-				return
-			}
-		}
-		specific.PlayBlock(specific)
-	} else {
+	if err := plugin.SubscribeBlock(streamPath, specific); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 }
