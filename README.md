@@ -1,25 +1,38 @@
-# jessica 插件
-websocket raw data protocol plugin for monibuca
+# JESSICA 插件
 
 通过Websocket传输音视频数据，使用Jessibuca播放器进行播放。
 
 ## 插件地址
 
-github.com/Monibuca/plugin-jessica
+https://github.com/Monibuca/plugin-jessica
+
+## 插件引入
+```go
+import (
+    _ "m7s.live/plugin/jessica/v4"
+)
+```
 
 ## 配置
 
 可配置WS协议和WSS协议监听地址端口
 
-```toml
-[Jessica]
-ListenAddr = ":8080"
-CertFile = "../foo.cert"
-KeyFile  = "../foo.key"
-ListenAddrTLS = ":8088"
+```yaml
+jessica:
+  http:
+      listenaddr: :8080
+      listenaddrtls: :8081
+      certfile: monibuca.com.pem
+      keyfile: monibuca.com.key
+      cors: true
+      username: ""
+      password: ""
+  subscribe:
+      subaudio: true
+      subvideo: true
+      iframeonly: false
+      waittimeout: 10
 ```
-
-- 如果不设置ListenAddr和ListenAddrTLS，将共用网关的端口监听
 
 ## 协议说明
 
