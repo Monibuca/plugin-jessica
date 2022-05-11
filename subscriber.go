@@ -44,19 +44,19 @@ func (j *JessicaSubscriber) OnEvent(event any) {
 	case AudioDeConf:
 		j.head[0] = 1
 		binary.BigEndian.PutUint32(j.head[1:], 0)
-		j.WriteAVCC(v.AVCC)
+		j.WriteAVCC(v.GetAVCC())
 	case VideoDeConf:
 		j.head[0] = 2
 		binary.BigEndian.PutUint32(j.head[1:], 0)
-		j.WriteAVCC(v.AVCC)
+		j.WriteAVCC(v.GetAVCC())
 	case *AudioFrame:
 		j.head[0] = 1
 		binary.BigEndian.PutUint32(j.head[1:], v.AbsTime)
-		j.WriteAVCC(v.AVCC)
+		j.WriteAVCC(v.GetAVCC())
 	case *VideoFrame:
 		j.head[0] = 2
 		binary.BigEndian.PutUint32(j.head[1:], v.AbsTime)
-		j.WriteAVCC(v.AVCC)
+		j.WriteAVCC(v.GetAVCC())
 	default:
 		j.Subscriber.OnEvent(event)
 	}
