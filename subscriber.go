@@ -19,7 +19,9 @@ type JessicaSubscriber struct {
 	head []byte
 }
 
-func (j *JessicaSubscriber) WriteAVCC(avcc net.Buffers) {
+func (j *JessicaSubscriber) WriteAVCC(avcc net.Buffers, typ byte, ts uint32) {
+	j.head[0] = typ
+	binary.BigEndian.PutUint32(j.head[1:], ts)
 	err := ws.WriteHeader(j, ws.Header{
 		Fin:    true,
 		OpCode: ws.OpBinary,
@@ -33,30 +35,21 @@ func (j *JessicaSubscriber) WriteAVCC(avcc net.Buffers) {
 	if err != nil {
 		return
 	}
-	if _, err = j.Write(j.head); err != nil {
-		return
-	}
-	_, err = avcc.WriteTo(j)
+	var clone net.Buffers
+	clone = append(append(clone, j.head), avcc...)
+	_, err = clone.WriteTo(j)
 }
 
 func (j *JessicaSubscriber) OnEvent(event any) {
 	switch v := event.(type) {
 	case AudioDeConf:
-		j.head[0] = 1
-		binary.BigEndian.PutUint32(j.head[1:], 0)
-		j.WriteAVCC(v.GetAVCC())
+		j.WriteAVCC(v.AVCC, 1, 0)
 	case VideoDeConf:
-		j.head[0] = 2
-		binary.BigEndian.PutUint32(j.head[1:], 0)
-		j.WriteAVCC(v.GetAVCC())
+		j.WriteAVCC(v.AVCC, 2, 0)
 	case *AudioFrame:
-		j.head[0] = 1
-		binary.BigEndian.PutUint32(j.head[1:], v.AbsTime)
-		j.WriteAVCC(v.GetAVCC())
+		j.WriteAVCC(v.AVCC, 1, v.AbsTime-j.SkipTS)
 	case *VideoFrame:
-		j.head[0] = 2
-		binary.BigEndian.PutUint32(j.head[1:], v.AbsTime)
-		j.WriteAVCC(v.GetAVCC())
+		j.WriteAVCC(v.AVCC, 2, v.AbsTime-j.SkipTS)
 	default:
 		j.Subscriber.OnEvent(event)
 	}
@@ -66,7 +59,7 @@ type JessicaFLV struct {
 	Subscriber
 }
 
-func (j *JessicaFLV) WriteFLVTag(tag net.Buffers) {
+func (j *JessicaFLV) WriteFLVTag(tag FLVFrame) {
 	if err := ws.WriteHeader(j, ws.Header{
 		Fin:    true,
 		OpCode: ws.OpBinary,
@@ -93,8 +86,8 @@ func (j *JessicaFLV) OnEvent(event any) {
 		if _, err := j.Write(codec.FLVHeader); err != nil {
 			j.Stop()
 		}
-	case HaveFLV:
-		j.WriteFLVTag(v.GetFLV())
+	case FLVFrame:
+		j.WriteFLVTag(v)
 	default:
 		j.Subscriber.OnEvent(event)
 	}
@@ -127,6 +120,9 @@ func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		specific = &JessicaSubscriber{baseStream, make([]byte, 5)}
 	}
+	if err = plugin.Subscribe(streamPath, specific); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
 	go func() {
 		b := []byte{0}
 		for _, err := conn.Read(b); err == nil; _, err = conn.Read(b) {
@@ -134,8 +130,9 @@ func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		specific.Stop()
 	}()
-
-	if err := plugin.SubscribeBlock(streamPath, specific); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if isFlv {
+		specific.PlayFLV()
+	} else {
+		specific.PlayRaw()
 	}
 }
