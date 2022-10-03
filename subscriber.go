@@ -106,6 +106,9 @@ func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		isFlv = true
 	}
+	if r.URL.RawQuery != "" {
+		streamPath += "?" + r.URL.RawQuery
+	}
 	conn, _, _, err := ws.UpgradeHTTP(r, w)
 	if err != nil {
 		return
