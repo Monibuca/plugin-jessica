@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"regexp"
+	"time"
 
 	"github.com/gobwas/ws"
 	. "m7s.live/engine/v4"
@@ -37,6 +38,7 @@ func (j *JessicaSubscriber) WriteAVCC(avcc net.Buffers, typ byte, ts uint32) {
 	}
 	var clone net.Buffers
 	clone = append(append(clone, j.head), avcc...)
+	j.Writer.(net.Conn).SetWriteDeadline(time.Now().Add(time.Second * time.Duration(jessicaConfig.WriteTimeout)))
 	_, err = clone.WriteTo(j)
 }
 
@@ -123,7 +125,7 @@ func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		specific = &JessicaSubscriber{baseStream, make([]byte, 5)}
 	}
-	if err = plugin.Subscribe(streamPath, specific); err != nil {
+	if err = JessicaPlugin.Subscribe(streamPath, specific); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 	go func() {

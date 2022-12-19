@@ -9,8 +9,8 @@ type JessicaConfig struct {
 	config.HTTP
 	config.Subscribe
 }
-
-var plugin = InstallPlugin(new(JessicaConfig))
+var jessicaConfig = new(JessicaConfig)
+var JessicaPlugin = InstallPlugin(jessicaConfig)
 
 func (j *JessicaConfig) OnEvent(event any) {
 }
