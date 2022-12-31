@@ -38,7 +38,9 @@ func (j *JessicaSubscriber) WriteAVCC(avcc net.Buffers, typ byte, ts uint32) {
 	}
 	var clone net.Buffers
 	clone = append(append(clone, j.head), avcc...)
-	j.Writer.(net.Conn).SetWriteDeadline(time.Now().Add(time.Second * time.Duration(jessicaConfig.WriteTimeout)))
+	if jessicaConfig.WriteTimeout > 0 {
+		j.Writer.(net.Conn).SetWriteDeadline(time.Now().Add(time.Second * time.Duration(jessicaConfig.WriteTimeout)))
+	}
 	_, err = clone.WriteTo(j)
 }
 
@@ -116,7 +118,7 @@ func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	baseStream := Subscriber{}
-	baseStream.SetIO(conn)               //注入writer
+	baseStream.SetIO(conn) //注入writer
 	baseStream.SetParentCtx(r.Context()) //注入context
 	baseStream.ID = r.RemoteAddr
 	var specific ISubscriber
