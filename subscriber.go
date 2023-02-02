@@ -20,7 +20,7 @@ type JessicaSubscriber struct {
 	head []byte
 }
 
-func (j *JessicaSubscriber) WriteAVCC(avcc net.Buffers, typ byte, ts uint32) {
+func (j *JessicaSubscriber) WriteAVCC(typ byte, ts uint32, avcc ...[]byte) {
 	j.head[0] = typ
 	binary.BigEndian.PutUint32(j.head[1:], ts)
 	err := ws.WriteHeader(j, ws.Header{
@@ -47,13 +47,13 @@ func (j *JessicaSubscriber) WriteAVCC(avcc net.Buffers, typ byte, ts uint32) {
 func (j *JessicaSubscriber) OnEvent(event any) {
 	switch v := event.(type) {
 	case AudioDeConf:
-		j.WriteAVCC(v.AVCC, 1, 0)
+		j.WriteAVCC(1, 0, v)
 	case VideoDeConf:
-		j.WriteAVCC(v.AVCC, 2, 0)
-	case *AudioFrame:
-		j.WriteAVCC(v.AVCC, 1, v.AbsTime-j.SkipTS)
-	case *VideoFrame:
-		j.WriteAVCC(v.AVCC, 2, v.AbsTime-j.SkipTS)
+		j.WriteAVCC(2, 0, v)
+	case AudioFrame:
+		j.WriteAVCC(1, v.AbsTime, v.AVCC.ToBuffers()...)
+	case VideoFrame:
+		j.WriteAVCC(2, v.AbsTime, v.AVCC.ToBuffers()...)
 	default:
 		j.Subscriber.OnEvent(event)
 	}
@@ -118,7 +118,7 @@ func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	baseStream := Subscriber{}
-	baseStream.SetIO(conn) //注入writer
+	baseStream.SetIO(conn)               //注入writer
 	baseStream.SetParentCtx(r.Context()) //注入context
 	baseStream.ID = r.RemoteAddr
 	var specific ISubscriber
