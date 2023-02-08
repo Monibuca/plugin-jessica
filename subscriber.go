@@ -39,7 +39,7 @@ func (j *JessicaSubscriber) WriteAVCC(typ byte, ts uint32, avcc ...[]byte) {
 	var clone net.Buffers
 	clone = append(append(clone, j.head), avcc...)
 	if jessicaConfig.WriteTimeout > 0 {
-		j.Writer.(net.Conn).SetWriteDeadline(time.Now().Add(time.Second * time.Duration(jessicaConfig.WriteTimeout)))
+		j.Writer.(net.Conn).SetWriteDeadline(time.Now().Add(jessicaConfig.WriteTimeout))
 	}
 	_, err = clone.WriteTo(j)
 }
