@@ -4,16 +4,16 @@ import (
 	"encoding/binary"
 	"net"
 	"net/http"
-	"regexp"
+	"strings"
 	"time"
 
 	"github.com/gobwas/ws"
+	"github.com/gobwas/ws/wsutil"
+	"github.com/pion/rtp"
 	. "m7s.live/engine/v4"
 	"m7s.live/engine/v4/codec"
 	"m7s.live/engine/v4/util"
 )
-
-var streamPathReg = regexp.MustCompile("/(jessica/)?((.+)(\\.flv)|(.+))")
 
 type JessicaSubscriber struct {
 	Subscriber
@@ -41,7 +41,7 @@ func (j *JessicaSubscriber) WriteAVCC(typ byte, ts uint32, avcc ...[]byte) {
 	if jessicaConfig.WriteTimeout > 0 {
 		j.Writer.(net.Conn).SetWriteDeadline(time.Now().Add(jessicaConfig.WriteTimeout))
 	}
-	_, err = clone.WriteTo(j)
+	_, err = clone.WriteTo(j.Writer)
 }
 
 func (j *JessicaSubscriber) OnEvent(event any) {
@@ -72,7 +72,7 @@ func (j *JessicaFLV) WriteFLVTag(tag FLVFrame) {
 		j.Stop()
 		return
 	}
-	if _, err := tag.WriteTo(j); err != nil {
+	if _, err := tag.WriteTo(j.Writer); err != nil {
 		j.Stop()
 	}
 }
@@ -80,14 +80,7 @@ func (j *JessicaFLV) WriteFLVTag(tag FLVFrame) {
 func (j *JessicaFLV) OnEvent(event any) {
 	switch v := event.(type) {
 	case ISubscriber:
-		if err := ws.WriteHeader(j, ws.Header{
-			Fin:    true,
-			OpCode: ws.OpBinary,
-			Length: int64(13),
-		}); err != nil {
-			j.Stop()
-		}
-		if _, err := j.Write(codec.FLVHeader); err != nil {
+		if err := wsutil.WriteServerBinary(j, codec.FLVHeader); err != nil {
 			j.Stop()
 		}
 	case FLVFrame:
@@ -98,18 +91,8 @@ func (j *JessicaFLV) OnEvent(event any) {
 }
 
 func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	isFlv := false
-	parts := streamPathReg.FindStringSubmatch(r.RequestURI)
-	if parts == nil {
-		w.WriteHeader(404)
-		return
-	}
-	streamPath := parts[3]
-	if streamPath == "" {
-		streamPath = parts[5]
-	} else {
-		isFlv = true
-	}
+	isFlv := strings.HasSuffix(r.URL.Path, ".flv")
+	streamPath := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/"), ".flv")
 	if r.URL.RawQuery != "" {
 		streamPath += "?" + r.URL.RawQuery
 	}
@@ -129,17 +112,27 @@ func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	if err = JessicaPlugin.Subscribe(streamPath, specific); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-	go func() {
-		b := []byte{0}
-		for _, err := conn.Read(b); err == nil; _, err = conn.Read(b) {
-
-		}
-		specific.Stop()
-	}()
 	if isFlv {
-		specific.PlayFLV()
+		go specific.PlayFLV()
 	} else {
-		specific.PlayRaw()
+		go specific.PlayRaw()
+	}
+	defer specific.Stop()
+	b, err := wsutil.ReadClientBinary(conn)
+	var rtpPacket rtp.Packet
+	if err == nil {
+		dc := specific.GetSubscriber().Stream.NewDataTrack("voice", nil)
+		dc.Attach()
+		for err == nil {
+			err = rtpPacket.Unmarshal(b)
+			if err == nil {
+				dc.Push(rtpPacket.Payload)
+			}
+			b, err = wsutil.ReadClientBinary(conn)
+		}
+	} else {
+		// baseStream.Error("receive", zap.Error(err))
 	}
 }
