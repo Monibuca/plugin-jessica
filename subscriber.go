@@ -12,6 +12,7 @@ import (
 	"github.com/pion/rtp"
 	. "m7s.live/engine/v4"
 	"m7s.live/engine/v4/codec"
+	"m7s.live/engine/v4/track"
 	"m7s.live/engine/v4/util"
 )
 
@@ -90,8 +91,27 @@ func (j *JessicaFLV) OnEvent(event any) {
 	}
 }
 
+type JessicaPS struct {
+	Subscriber
+}
+
+func (j *JessicaPS) OnEvent(event any) {
+	switch v := event.(type) {
+	case *track.Data:
+		if v.Name == "ps" {
+			j.AddTrack(v)
+			go v.Play(j.IO, func(data any) error {
+				return wsutil.WriteServerBinary(j, data.(*util.ListItem[util.Buffer]).Value)
+			})
+		}
+	default:
+		j.Subscriber.OnEvent(event)
+	}
+}
+
 func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	isFlv := strings.HasSuffix(r.URL.Path, ".flv")
+	isPS := strings.HasSuffix(r.URL.Path, ".ps")
 	streamPath := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/"), ".flv")
 	if r.URL.RawQuery != "" {
 		streamPath += "?" + r.URL.RawQuery
@@ -105,7 +125,9 @@ func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	baseStream.SetParentCtx(r.Context()) //注入context
 	baseStream.ID = r.RemoteAddr
 	var specific ISubscriber
-	if isFlv {
+	if isPS {
+		specific = &JessicaPS{baseStream}
+	} else if isFlv {
 		specific = &JessicaFLV{baseStream}
 	} else {
 		specific = &JessicaSubscriber{baseStream, make([]byte, 5)}
