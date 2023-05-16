@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"net"
 	"net/http"
+	"path"
 	"strings"
 	"time"
 
@@ -91,28 +92,10 @@ func (j *JessicaFLV) OnEvent(event any) {
 	}
 }
 
-type JessicaPS struct {
-	Subscriber
-}
-
-func (j *JessicaPS) OnEvent(event any) {
-	switch v := event.(type) {
-	case *track.Data:
-		if v.Name == "ps" {
-			j.AddTrack(v)
-			go v.Play(j.IO, func(data any) error {
-				return wsutil.WriteServerBinary(j, data.(*util.ListItem[util.Buffer]).Value)
-			})
-		}
-	default:
-		j.Subscriber.OnEvent(event)
-	}
-}
-
 func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	isFlv := strings.HasSuffix(r.URL.Path, ".flv")
-	isPS := strings.HasSuffix(r.URL.Path, ".ps")
-	streamPath := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/"), ".flv")
+	ext := path.Ext(r.URL.Path)
+	streamPath := strings.TrimPrefix(r.URL.Path, "/")
+	streamPath = strings.TrimSuffix(streamPath, ext)
 	if r.URL.RawQuery != "" {
 		streamPath += "?" + r.URL.RawQuery
 	}
@@ -125,9 +108,7 @@ func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	baseStream.SetParentCtx(r.Context()) //注入context
 	baseStream.ID = r.RemoteAddr
 	var specific ISubscriber
-	if isPS {
-		specific = &JessicaPS{baseStream}
-	} else if isFlv {
+	if ext == ".flv" {
 		specific = &JessicaFLV{baseStream}
 	} else {
 		specific = &JessicaSubscriber{baseStream, make([]byte, 5)}
@@ -136,7 +117,7 @@ func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if isFlv {
+	if ext == ".flv" {
 		go specific.PlayFLV()
 	} else {
 		go specific.PlayRaw()
@@ -145,8 +126,8 @@ func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	b, err := wsutil.ReadClientBinary(conn)
 	var rtpPacket rtp.Packet
 	if err == nil {
-		dc := specific.GetSubscriber().Stream.NewDataTrack("voice", nil)
-		dc.Attach()
+		dc := track.NewDataTrack[[]byte]("voice")
+		dc.Attach(specific.GetSubscriber().Stream)
 		for err == nil {
 			err = rtpPacket.Unmarshal(b)
 			if err == nil {
