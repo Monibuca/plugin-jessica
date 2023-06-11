@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/gobwas/ws v1.1.0
+	github.com/pion/rtp v1.7.13
 	m7s.live/engine/v4 v4.9.4
 )
 
@@ -24,7 +25,6 @@ require (
 	github.com/marten-seemann/qtls-go1-19 v0.1.1 // indirect
 	github.com/onsi/ginkgo/v2 v2.2.0 // indirect
 	github.com/pion/randutil v0.1.0 // indirect
-	github.com/pion/rtp v1.7.13 // indirect
 	github.com/pion/webrtc/v3 v3.1.49 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/power-devops/perfstat v0.0.0-20220216144756-c35f1ee13d7c // indirect

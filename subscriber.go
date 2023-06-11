@@ -12,13 +12,17 @@ import (
 	"github.com/gobwas/ws/wsutil"
 	"github.com/pion/rtp"
 	. "m7s.live/engine/v4"
-	"m7s.live/engine/v4/codec"
+
 	"m7s.live/engine/v4/track"
 	"m7s.live/engine/v4/util"
 )
 
-type JessicaSubscriber struct {
+type JessicaBase struct {
 	Subscriber
+	IsWebSocket bool
+}
+type JessicaSubscriber struct {
+	JessicaBase
 	head []byte
 }
 
@@ -61,37 +65,6 @@ func (j *JessicaSubscriber) OnEvent(event any) {
 	}
 }
 
-type JessicaFLV struct {
-	Subscriber
-}
-
-func (j *JessicaFLV) WriteFLVTag(tag FLVFrame) {
-	if err := ws.WriteHeader(j, ws.Header{
-		Fin:    true,
-		OpCode: ws.OpBinary,
-		Length: int64(util.SizeOfBuffers(tag)),
-	}); err != nil {
-		j.Stop()
-		return
-	}
-	if _, err := tag.WriteTo(j.Writer); err != nil {
-		j.Stop()
-	}
-}
-
-func (j *JessicaFLV) OnEvent(event any) {
-	switch v := event.(type) {
-	case ISubscriber:
-		if err := wsutil.WriteServerBinary(j, codec.FLVHeader); err != nil {
-			j.Stop()
-		}
-	case FLVFrame:
-		j.WriteFLVTag(v)
-	default:
-		j.Subscriber.OnEvent(event)
-	}
-}
-
 func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ext := path.Ext(r.URL.Path)
 	streamPath := strings.TrimPrefix(r.URL.Path, "/")
@@ -99,43 +72,78 @@ func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.URL.RawQuery != "" {
 		streamPath += "?" + r.URL.RawQuery
 	}
-	conn, _, _, err := ws.UpgradeHTTP(r, w)
-	if err != nil {
-		return
+	baseStream := JessicaBase{}
+	var conn net.Conn
+	var err error
+	if r.Header.Get("Upgrade") == "websocket" {
+		baseStream.IsWebSocket = true
+		conn, _, _, err = ws.UpgradeHTTP(r, w)
+		if err != nil {
+			return
+		}
+	} else {
+		if ext == ".flv" {
+			w.Header().Set("Content-Type", "video/x-flv")
+		} else {
+			w.Header().Set("Content-Type", "application/octet-stream")
+		}
+		w.Header().Set("Transfer-Encoding", "identity")
+		w.WriteHeader(http.StatusOK)
+		if hijacker, ok := w.(http.Hijacker); ok && j.WriteTimeout > 0 {
+			conn, _, _ = hijacker.Hijack()
+			conn.SetWriteDeadline(time.Now().Add(j.WriteTimeout))
+		} else {
+			w.(http.Flusher).Flush()
+		}
 	}
-	baseStream := Subscriber{}
-	baseStream.SetIO(conn)               //注入writer
+	if conn == nil { //注入writer
+		baseStream.SetIO(w)
+	} else {
+		baseStream.SetIO(conn)
+	}
 	baseStream.SetParentCtx(r.Context()) //注入context
 	baseStream.ID = r.RemoteAddr
 	var specific ISubscriber
-	if ext == ".flv" {
+	copyConfig := *&j.Subscribe
+	switch ext {
+	case ".flv":
 		specific = &JessicaFLV{baseStream}
-	} else {
+	case ".h264", ".h265":
+		copyConfig.SubVideoTracks = strings.Split(ext, ".")[1:]
+		copyConfig.SubAudio = false
+		baseStream.Config = &copyConfig
+		specific = &JessicaH26x{baseStream}
+	default:
 		specific = &JessicaSubscriber{baseStream, make([]byte, 5)}
 	}
+
 	if err = JessicaPlugin.Subscribe(streamPath, specific); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	play := specific.PlayRaw
 	if ext == ".flv" {
-		go specific.PlayFLV()
-	} else {
-		go specific.PlayRaw()
+		play = specific.PlayFLV
 	}
 	defer specific.Stop()
-	b, err := wsutil.ReadClientBinary(conn)
-	var rtpPacket rtp.Packet
-	if err == nil {
-		dc := track.NewDataTrack[[]byte]("voice")
-		dc.Attach(specific.GetSubscriber().Stream)
-		for err == nil {
-			err = rtpPacket.Unmarshal(b)
-			if err == nil {
-				dc.Push(rtpPacket.Payload)
+	if baseStream.IsWebSocket {
+		go play()
+		b, err := wsutil.ReadClientBinary(conn)
+		var rtpPacket rtp.Packet
+		if err == nil {
+			dc := track.NewDataTrack[[]byte]("voice")
+			dc.Attach(specific.GetSubscriber().Stream)
+			for err == nil {
+				err = rtpPacket.Unmarshal(b)
+				if err == nil {
+					dc.Push(rtpPacket.Payload)
+				}
+				b, err = wsutil.ReadClientBinary(conn)
 			}
-			b, err = wsutil.ReadClientBinary(conn)
+		} else {
+			// baseStream.Error("receive", zap.Error(err))
 		}
 	} else {
-		// baseStream.Error("receive", zap.Error(err))
+		play()
 	}
 }
