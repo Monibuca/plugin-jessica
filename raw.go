@@ -2,6 +2,7 @@ package jessica
 
 import (
 	"github.com/gobwas/ws"
+	"go.uber.org/zap"
 	. "m7s.live/engine/v4"
 	"m7s.live/engine/v4/util"
 )
@@ -20,12 +21,12 @@ func (j *JessicaH26x) OnEvent(event any) {
 				OpCode: ws.OpBinary,
 				Length: int64(util.SizeOfBuffers(annexB)),
 			}); err != nil {
-				j.Stop()
+				j.Stop(zap.Error(err))
 				return
 			}
 		}
 		if _, err := annexB.WriteTo(j.Writer); err != nil {
-			j.Stop()
+			j.Stop(zap.Error(err))
 		}
 	default:
 		j.Subscriber.OnEvent(event)

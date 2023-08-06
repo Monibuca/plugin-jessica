@@ -11,6 +11,7 @@ import (
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
 	"github.com/pion/rtp"
+	"go.uber.org/zap"
 	. "m7s.live/engine/v4"
 
 	"m7s.live/engine/v4/track"
@@ -36,7 +37,7 @@ func (j *JessicaSubscriber) WriteAVCC(typ byte, ts uint32, avcc ...[]byte) {
 	})
 	defer func() {
 		if err != nil {
-			j.Stop()
+			j.Stop(zap.Error(err))
 		}
 	}()
 	if err != nil {
@@ -118,7 +119,11 @@ func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = JessicaPlugin.Subscribe(streamPath, specific); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		if baseStream.IsWebSocket {
+			wsutil.WriteServerText(conn, []byte(err.Error()))
+		} else {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
 		return
 	}
 	play := specific.PlayRaw
