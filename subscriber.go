@@ -103,7 +103,7 @@ func (j *JessicaConfig) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		baseStream.SetIO(conn)
 	}
 	baseStream.SetParentCtx(r.Context()) //注入context
-	baseStream.ID = r.RemoteAddr
+	baseStream.RemoteAddr = r.RemoteAddr
 	var specific ISubscriber
 	copyConfig := *&j.Subscribe
 	switch ext {
